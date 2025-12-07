@@ -18,6 +18,7 @@ from src.ui.pages.tweaks import PaginaTweaks
 from src.ui.pages.bloatware import PaginaBloatware
 from src.ui.pages.limpieza import PaginaLimpieza
 from src.ui.pages.servicios import PaginaServicios
+from src.ui.pages.drivers import PaginaDrivers
 from src.utils.admin import es_administrador, solicitar_admin
 
 
@@ -99,6 +100,7 @@ class TecnodespegueOptimizer:
             (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware"),
             (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza"),
             (ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED, "Servicios"),
+            (ft.Icons.MEMORY_ROUNDED, "Drivers"),
         ]
 
         self.nav_buttons = [
@@ -268,14 +270,6 @@ class TecnodespegueOptimizer:
         self.pagina_actual = index
 
         # Actualizar botones de navegación
-        nav_items = [
-            (ft.Icons.DASHBOARD_ROUNDED, "Inicio"),
-            (ft.Icons.TUNE_ROUNDED, "Tweaks"),
-            (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware"),
-            (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza"),
-            (ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED, "Servicios"),
-        ]
-
         for i, btn in enumerate(self.nav_buttons):
             is_selected = i == index
             btn.content.controls[0].bgcolor = ft.Colors.with_opacity(0.15, theme.COLORS["primary"]) if is_selected else None
@@ -289,6 +283,7 @@ class TecnodespegueOptimizer:
             lambda: PaginaBloatware(self.page),
             lambda: PaginaLimpieza(self.page),
             lambda: PaginaServicios(self.page),
+            lambda: PaginaDrivers(self.page),
         ]
 
         self.contenido.content = paginas[index]()
