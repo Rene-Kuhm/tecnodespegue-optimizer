@@ -205,7 +205,7 @@ class TecnodespegueOptimizer:
             padding=ft.padding.only(bottom=16),
         )
 
-        # Sidebar compacto estilo CleanMyMac
+        # Sidebar estilo CleanMyMac
         sidebar = ft.Container(
             content=ft.Column(
                 controls=[
@@ -219,7 +219,7 @@ class TecnodespegueOptimizer:
                 spacing=0,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            width=88,
+            width=110,
             bgcolor=theme.COLORS["sidebar"],
             border=ft.border.only(right=ft.BorderSide(1, theme.COLORS["border"])),
         )
@@ -317,18 +317,24 @@ class TecnodespegueOptimizer:
             # Actualizar fondo del item
             item.bgcolor = ft.Colors.with_opacity(0.08, color) if is_selected else None
 
-        # Páginas disponibles
-        paginas = [
-            lambda: PaginaInicio(self.page),
-            lambda: PaginaTweaks(self.page),
-            lambda: PaginaBloatware(self.page),
-            lambda: PaginaLimpieza(self.page),
-            lambda: PaginaServicios(self.page),
-            lambda: PaginaDrivers(self.page),
-        ]
+        # Crear la página según el índice
+        nueva_pagina = None
+        if index == 0:
+            nueva_pagina = PaginaInicio(self.page)
+        elif index == 1:
+            nueva_pagina = PaginaTweaks(self.page)
+        elif index == 2:
+            nueva_pagina = PaginaBloatware(self.page)
+        elif index == 3:
+            nueva_pagina = PaginaLimpieza(self.page)
+        elif index == 4:
+            nueva_pagina = PaginaServicios(self.page)
+        elif index == 5:
+            nueva_pagina = PaginaDrivers(self.page)
 
-        self.contenido.content = paginas[index]()
-        self.page.update()
+        if nueva_pagina:
+            self.contenido.content = nueva_pagina
+            self.page.update()
 
     def _mostrar_advertencia_admin(self):
         """Muestra una advertencia si no hay permisos de admin."""
