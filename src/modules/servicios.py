@@ -95,11 +95,11 @@ SERVICIOS_DESHABILITABLES = {
 def obtener_servicios() -> list[Servicio]:
     """Obtiene todos los servicios del sistema."""
     cmd = '''
-    Get-Service | Select-Object Name, DisplayName, Status, StartType | ConvertTo-Json
+    Get-Service | Select-Object Name, DisplayName, Status, StartType | ConvertTo-Json -Compress
     '''
     exito, salida = ejecutar_powershell(cmd)
 
-    if not exito:
+    if not exito or not salida or salida.strip() in ['', '[]', 'null']:
         return []
 
     import json
@@ -111,17 +111,41 @@ def obtener_servicios() -> list[Servicio]:
         servicios = []
         for svc in datos:
             nombre = svc.get('Name', '')
-            estado = EstadoServicio.EJECUTANDO if svc.get('Status') == 4 else EstadoServicio.DETENIDO
-            tipo = svc.get('StartType', 0)
+            if not nombre:
+                continue
 
-            if tipo == 2:
-                tipo_inicio = TipoInicio.AUTOMATICO
-            elif tipo == 3:
-                tipo_inicio = TipoInicio.MANUAL
-            elif tipo == 4:
-                tipo_inicio = TipoInicio.DESHABILITADO
+            # Estado puede ser número (4=Running, 1=Stopped) o string
+            status = svc.get('Status')
+            if isinstance(status, int):
+                estado = EstadoServicio.EJECUTANDO if status == 4 else EstadoServicio.DETENIDO
+            elif isinstance(status, str):
+                estado = EstadoServicio.EJECUTANDO if status.lower() == 'running' else EstadoServicio.DETENIDO
             else:
-                tipo_inicio = TipoInicio.AUTOMATICO
+                estado = EstadoServicio.DESCONOCIDO
+
+            # StartType puede ser número (2=Auto, 3=Manual, 4=Disabled) o string
+            tipo = svc.get('StartType', 0)
+            if isinstance(tipo, int):
+                if tipo == 2:
+                    tipo_inicio = TipoInicio.AUTOMATICO
+                elif tipo == 3:
+                    tipo_inicio = TipoInicio.MANUAL
+                elif tipo == 4:
+                    tipo_inicio = TipoInicio.DESHABILITADO
+                else:
+                    tipo_inicio = TipoInicio.AUTOMATICO
+            elif isinstance(tipo, str):
+                tipo_lower = tipo.lower()
+                if 'disabled' in tipo_lower:
+                    tipo_inicio = TipoInicio.DESHABILITADO
+                elif 'manual' in tipo_lower:
+                    tipo_inicio = TipoInicio.MANUAL
+                elif 'auto' in tipo_lower:
+                    tipo_inicio = TipoInicio.AUTOMATICO
+                else:
+                    tipo_inicio = TipoInicio.MANUAL
+            else:
+                tipo_inicio = TipoInicio.MANUAL
 
             desc = ""
             recomendacion = ""
@@ -133,7 +157,7 @@ def obtener_servicios() -> list[Servicio]:
 
             servicios.append(Servicio(
                 nombre=nombre,
-                nombre_display=svc.get('DisplayName', nombre),
+                nombre_display=svc.get('DisplayName', nombre) or nombre,
                 descripcion=desc,
                 estado=estado,
                 tipo_inicio=tipo_inicio,
@@ -142,7 +166,7 @@ def obtener_servicios() -> list[Servicio]:
             ))
 
         return servicios
-    except:
+    except Exception:
         return []
 
 

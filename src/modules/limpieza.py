@@ -35,23 +35,42 @@ def limpiar_prefetch() -> ResultadoLimpieza:
 
 def limpiar_cache_windows_update() -> ResultadoLimpieza:
     """Limpia caché de Windows Update."""
-    cmd = '''
-    Stop-Service -Name "wuauserv" -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path "C:\\Windows\\SoftwareDistribution\\Download\\*" -Recurse -Force -ErrorAction SilentlyContinue
-    Start-Service -Name "wuauserv" -ErrorAction SilentlyContinue
-    '''
-    exito, _ = ejecutar_powershell(cmd)
-
     ruta = "C:\\Windows\\SoftwareDistribution\\Download"
-    if os.path.exists(ruta):
-        tamano = _obtener_tamano_directorio(ruta)
-        return ResultadoLimpieza(
-            nombre="Caché Windows Update",
-            espacio_liberado_mb=tamano,
-            archivos_eliminados=0,
-            exito=exito
-        )
-    return ResultadoLimpieza("Caché Windows Update", 0, 0, True)
+
+    # Calcular tamaño antes de limpiar
+    tamano_antes = _obtener_tamano_directorio(ruta) if os.path.exists(ruta) else 0
+
+    cmd = '''
+    # Detener el servicio de Windows Update
+    $wu = Get-Service -Name "wuauserv" -ErrorAction SilentlyContinue
+    if ($wu -and $wu.Status -eq 'Running') {
+        Stop-Service -Name "wuauserv" -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+    }
+
+    # Limpiar caché
+    if (Test-Path "C:\\Windows\\SoftwareDistribution\\Download") {
+        Remove-Item -Path "C:\\Windows\\SoftwareDistribution\\Download\\*" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    # Reiniciar servicio
+    Start-Service -Name "wuauserv" -ErrorAction SilentlyContinue
+    Write-Output "DONE"
+    '''
+
+    exito, salida = ejecutar_powershell(cmd)
+
+    # Calcular espacio liberado
+    tamano_despues = _obtener_tamano_directorio(ruta) if os.path.exists(ruta) else 0
+    espacio_liberado = max(0, tamano_antes - tamano_despues)
+
+    return ResultadoLimpieza(
+        nombre="Caché Windows Update",
+        espacio_liberado_mb=round(espacio_liberado, 2),
+        archivos_eliminados=0,
+        exito="DONE" in salida or exito,
+        mensaje="Caché limpiada correctamente" if exito else "Error parcial al limpiar"
+    )
 
 
 def limpiar_thumbnails() -> ResultadoLimpieza:

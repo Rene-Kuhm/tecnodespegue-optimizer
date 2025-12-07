@@ -50,13 +50,16 @@ def _crear_startupinfo():
 def ejecutar_powershell(comando: str, como_admin: bool = True) -> tuple[bool, str]:
     """Ejecuta un comando de PowerShell sin mostrar ventana y retorna el resultado."""
     try:
+        # Configurar output como UTF-8
+        comando_utf8 = f"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; {comando}"
+
         args = [
             "powershell.exe",
             "-NoProfile",
             "-NonInteractive",
             "-WindowStyle", "Hidden",
             "-ExecutionPolicy", "Bypass",
-            "-Command", comando
+            "-Command", comando_utf8
         ]
 
         result = subprocess.run(
@@ -66,17 +69,24 @@ def ejecutar_powershell(comando: str, como_admin: bool = True) -> tuple[bool, st
             encoding='utf-8',
             errors='replace',
             creationflags=CREATE_NO_WINDOW,
-            startupinfo=_crear_startupinfo()
+            startupinfo=_crear_startupinfo(),
+            timeout=300  # 5 minutos máximo
         )
 
         salida = result.stdout.strip() if result.stdout else ""
         error = result.stderr.strip() if result.stderr else ""
 
+        # Considerar éxito si returncode es 0 o si hay salida válida
         if result.returncode == 0:
             return True, salida
+        elif salida and not error:
+            # Algunos comandos retornan código no-cero pero funcionan
+            return True, salida
         else:
-            return False, error or salida
+            return False, error or salida or "Error desconocido"
 
+    except subprocess.TimeoutExpired:
+        return False, "El comando excedió el tiempo límite"
     except Exception as e:
         return False, str(e)
 
@@ -92,7 +102,8 @@ def ejecutar_cmd(comando: str) -> tuple[bool, str]:
             encoding='utf-8',
             errors='replace',
             creationflags=CREATE_NO_WINDOW,
-            startupinfo=_crear_startupinfo()
+            startupinfo=_crear_startupinfo(),
+            timeout=120  # 2 minutos máximo
         )
 
         salida = result.stdout.strip() if result.stdout else ""
@@ -100,6 +111,8 @@ def ejecutar_cmd(comando: str) -> tuple[bool, str]:
 
         return result.returncode == 0, salida or error
 
+    except subprocess.TimeoutExpired:
+        return False, "El comando excedió el tiempo límite"
     except Exception as e:
         return False, str(e)
 

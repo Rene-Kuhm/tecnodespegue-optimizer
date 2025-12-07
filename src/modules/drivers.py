@@ -156,7 +156,7 @@ def escanear_drivers(callback: Optional[Callable[[str, int], None]] = None) -> R
     if callback:
         callback("Analizando drivers instalados...", 30)
 
-    if exito and salida:
+    if exito and salida and salida.strip() not in ['', '[]', 'null']:
         try:
             import json
             datos = json.loads(salida)
@@ -164,12 +164,16 @@ def escanear_drivers(callback: Optional[Callable[[str, int], None]] = None) -> R
             if isinstance(datos, dict):
                 datos = [datos]
 
+            total_drivers = len(datos)
             for i, d in enumerate(datos):
                 if callback and i % 20 == 0:
-                    progreso = 30 + int((i / len(datos)) * 40)
-                    callback(f"Procesando driver {i+1} de {len(datos)}...", progreso)
+                    progreso = 30 + int((i / max(total_drivers, 1)) * 40)
+                    callback(f"Procesando driver {i+1} de {total_drivers}...", progreso)
 
                 nombre = d.get('DeviceName') or 'Desconocido'
+                if not nombre or nombre == 'Desconocido':
+                    continue  # Saltar dispositivos sin nombre
+
                 fabricante = d.get('Manufacturer') or 'Desconocido'
                 version = d.get('DriverVersion') or 'N/A'
                 fecha_raw = d.get('DriverDate', '')
@@ -178,14 +182,21 @@ def escanear_drivers(callback: Optional[Callable[[str, int], None]] = None) -> R
                 inf_name = d.get('InfName') or ''
                 hardware_id = d.get('HardWareID') or ''
 
+                # Manejar HardwareID que puede ser lista o string
+                if isinstance(hardware_id, list):
+                    hardware_id = hardware_id[0] if hardware_id else ''
+
                 # Parsear fecha
                 fecha = "N/A"
                 if fecha_raw:
                     try:
-                        match = re.match(r'(\d{4})(\d{2})(\d{2})', str(fecha_raw))
-                        if match:
-                            fecha = f"{match.group(3)}/{match.group(2)}/{match.group(1)}"
-                    except:
+                        # La fecha puede venir en formato WMI: yyyymmdd000000.000000+000
+                        fecha_str = str(fecha_raw)
+                        if len(fecha_str) >= 8:
+                            match = re.match(r'(\d{4})(\d{2})(\d{2})', fecha_str)
+                            if match:
+                                fecha = f"{match.group(3)}/{match.group(2)}/{match.group(1)}"
+                    except Exception:
                         pass
 
                 # Determinar estado
@@ -216,7 +227,9 @@ def escanear_drivers(callback: Optional[Callable[[str, int], None]] = None) -> R
                 )
                 drivers.append(driver)
 
-        except:
+        except json.JSONDecodeError:
+            pass
+        except Exception:
             pass
 
     if callback:

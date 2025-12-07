@@ -91,18 +91,52 @@ def verificar_app_instalada(paquete: str) -> bool:
     """Verifica si una app está instalada."""
     # Remover asteriscos para búsqueda
     paquete_limpio = paquete.replace('*', '')
-    cmd = f"Get-AppxPackage -Name '*{paquete_limpio}*' | Select-Object -First 1"
+    cmd = f'''
+    $app = Get-AppxPackage -Name "*{paquete_limpio}*" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($app) {{ Write-Output "FOUND" }} else {{ Write-Output "NOT_FOUND" }}
+    '''
     exito, salida = ejecutar_powershell(cmd)
-    return exito and len(salida.strip()) > 0
+    return exito and "FOUND" in salida
 
 
 def desinstalar_app(paquete: str) -> tuple[bool, str]:
     """Desinstala una app UWP."""
+    paquete_limpio = paquete.replace('*', '')
     cmd = f'''
-    Get-AppxPackage -AllUsers {paquete} | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
-    Get-AppxProvisionedPackage -Online | Where-Object {{ $_.DisplayName -like "{paquete.replace('*', '')}" }} | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+    $ErrorActionPreference = 'SilentlyContinue'
+
+    # Intentar remover para el usuario actual primero
+    $apps = Get-AppxPackage -Name "*{paquete_limpio}*"
+    foreach ($app in $apps) {{
+        Remove-AppxPackage -Package $app.PackageFullName -ErrorAction SilentlyContinue
+    }}
+
+    # Intentar remover para todos los usuarios
+    $appsAll = Get-AppxPackage -AllUsers -Name "*{paquete_limpio}*"
+    foreach ($app in $appsAll) {{
+        Remove-AppxPackage -Package $app.PackageFullName -AllUsers -ErrorAction SilentlyContinue
+    }}
+
+    # Remover el paquete provisionado para que no se reinstale
+    $provisioned = Get-AppxProvisionedPackage -Online | Where-Object {{ $_.DisplayName -like "*{paquete_limpio}*" }}
+    foreach ($prov in $provisioned) {{
+        Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName -ErrorAction SilentlyContinue
+    }}
+
+    # Verificar si se eliminó
+    $remaining = Get-AppxPackage -Name "*{paquete_limpio}*" -ErrorAction SilentlyContinue
+    if ($remaining) {{
+        Write-Output "PARTIAL"
+    }} else {{
+        Write-Output "SUCCESS"
+    }}
     '''
-    return ejecutar_powershell(cmd)
+    exito, salida = ejecutar_powershell(cmd)
+    if "SUCCESS" in salida:
+        return True, "Aplicación eliminada correctamente"
+    elif "PARTIAL" in salida:
+        return True, "Aplicación eliminada parcialmente"
+    return exito, salida
 
 
 def desinstalar_multiples_apps(paquetes: list[str]) -> dict[str, tuple[bool, str]]:
