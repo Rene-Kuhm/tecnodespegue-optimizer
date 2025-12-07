@@ -2,6 +2,12 @@
 import ctypes
 import sys
 import os
+import subprocess
+
+# Constantes para ocultar ventanas
+CREATE_NO_WINDOW = 0x08000000
+STARTF_USESHOWWINDOW = 0x00000001
+SW_HIDE = 0
 
 
 def es_administrador() -> bool:
@@ -15,25 +21,40 @@ def es_administrador() -> bool:
 def solicitar_admin():
     """Reinicia el script con permisos de administrador."""
     if not es_administrador():
+        # Usar pythonw para no mostrar consola
+        python_exe = sys.executable
+        if python_exe.endswith('python.exe'):
+            pythonw = python_exe.replace('python.exe', 'pythonw.exe')
+            if os.path.exists(pythonw):
+                python_exe = pythonw
+
         ctypes.windll.shell32.ShellExecuteW(
             None,
             "runas",
-            sys.executable,
+            python_exe,
             " ".join([f'"{arg}"' for arg in sys.argv]),
             None,
-            1
+            0  # SW_HIDE - ocultar ventana
         )
         sys.exit(0)
 
 
-def ejecutar_powershell(comando: str, como_admin: bool = True) -> tuple[bool, str]:
-    """Ejecuta un comando de PowerShell y retorna el resultado."""
-    import subprocess
+def _crear_startupinfo():
+    """Crea un objeto STARTUPINFO para ocultar ventanas."""
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = SW_HIDE
+    return startupinfo
 
+
+def ejecutar_powershell(comando: str, como_admin: bool = True) -> tuple[bool, str]:
+    """Ejecuta un comando de PowerShell sin mostrar ventana y retorna el resultado."""
     try:
         args = [
             "powershell.exe",
             "-NoProfile",
+            "-NonInteractive",
+            "-WindowStyle", "Hidden",
             "-ExecutionPolicy", "Bypass",
             "-Command", comando
         ]
@@ -43,7 +64,9 @@ def ejecutar_powershell(comando: str, como_admin: bool = True) -> tuple[bool, st
             capture_output=True,
             text=True,
             encoding='utf-8',
-            errors='replace'
+            errors='replace',
+            creationflags=CREATE_NO_WINDOW,
+            startupinfo=_crear_startupinfo()
         )
 
         salida = result.stdout.strip() if result.stdout else ""
@@ -59,9 +82,7 @@ def ejecutar_powershell(comando: str, como_admin: bool = True) -> tuple[bool, st
 
 
 def ejecutar_cmd(comando: str) -> tuple[bool, str]:
-    """Ejecuta un comando de CMD y retorna el resultado."""
-    import subprocess
-
+    """Ejecuta un comando de CMD sin mostrar ventana y retorna el resultado."""
     try:
         result = subprocess.run(
             comando,
@@ -69,7 +90,32 @@ def ejecutar_cmd(comando: str) -> tuple[bool, str]:
             capture_output=True,
             text=True,
             encoding='utf-8',
-            errors='replace'
+            errors='replace',
+            creationflags=CREATE_NO_WINDOW,
+            startupinfo=_crear_startupinfo()
+        )
+
+        salida = result.stdout.strip() if result.stdout else ""
+        error = result.stderr.strip() if result.stderr else ""
+
+        return result.returncode == 0, salida or error
+
+    except Exception as e:
+        return False, str(e)
+
+
+def ejecutar_reg(comando: str) -> tuple[bool, str]:
+    """Ejecuta un comando de registro sin mostrar ventana."""
+    try:
+        result = subprocess.run(
+            f"reg {comando}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            creationflags=CREATE_NO_WINDOW,
+            startupinfo=_crear_startupinfo()
         )
 
         salida = result.stdout.strip() if result.stdout else ""
