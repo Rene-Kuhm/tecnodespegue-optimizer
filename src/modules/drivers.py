@@ -57,8 +57,8 @@ class ResultadoEscaneo:
 
 def _categorizar_driver(nombre: str, clase: str) -> CategoriaDriver:
     """Determina la categoría del driver basándose en su nombre y clase."""
-    nombre_lower = nombre.lower()
-    clase_lower = clase.lower()
+    nombre_lower = (nombre or "").lower()
+    clase_lower = (clase or "").lower()
 
     if any(x in nombre_lower or x in clase_lower for x in ['display', 'graphics', 'gpu', 'nvidia', 'amd', 'intel', 'video', 'vga']):
         return CategoriaDriver.DISPLAY
@@ -327,60 +327,133 @@ def actualizar_driver_windows_update(device_id: str, callback: Optional[Callable
 
 def actualizar_todos_drivers(callback: Optional[Callable[[str, int], None]] = None) -> tuple[int, int, str]:
     """
-    Actualiza todos los drivers posibles usando Windows Update.
+    Actualiza todos los drivers posibles usando múltiples métodos.
 
     Returns:
         (exitosos, fallidos, mensaje)
     """
-    if callback:
-        callback("Escaneando dispositivos...", 10)
+    drivers_instalados = 0
+    mensajes = []
 
-    # Escanear dispositivos para detectar nuevos
+    if callback:
+        callback("Escaneando dispositivos del sistema...", 5)
+
+    # 1. Escanear dispositivos para detectar nuevos
     ejecutar_cmd("pnputil /scan-devices")
 
     if callback:
-        callback("Buscando actualizaciones de drivers...", 30)
+        callback("Buscando drivers faltantes...", 15)
 
-    # Buscar e instalar actualizaciones de drivers
-    comando = """
-    $UpdateSession = New-Object -ComObject Microsoft.Update.Session
-    $UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
-    $Updates = $UpdateSearcher.Search("IsInstalled=0 and Type='Driver'")
+    # 2. Obtener dispositivos con problemas (código 28 = driver faltante)
+    comando_faltantes = """
+    Get-PnpDevice | Where-Object { $_.Problem -eq 28 -or $_.Status -eq 'Error' } |
+    Select-Object InstanceId, FriendlyName, Class, Problem |
+    ConvertTo-Json -Compress
+    """
 
-    if ($Updates.Updates.Count -eq 0) {
-        Write-Output "NO_UPDATES:0"
-    } else {
-        $Downloader = $UpdateSession.CreateUpdateDownloader()
-        $Downloader.Updates = $Updates.Updates
-        $Downloader.Download()
+    exito_faltantes, salida_faltantes = ejecutar_powershell(comando_faltantes)
+    dispositivos_faltantes = []
 
-        $Installer = $UpdateSession.CreateUpdateInstaller()
-        $Installer.Updates = $Updates.Updates
-        $Result = $Installer.Install()
+    if exito_faltantes and salida_faltantes and salida_faltantes.strip() not in ['', '[]', 'null']:
+        try:
+            import json
+            datos = json.loads(salida_faltantes)
+            if isinstance(datos, dict):
+                datos = [datos]
+            dispositivos_faltantes = datos
+        except:
+            pass
 
-        $success = ($Updates.Updates | Where-Object { $_.IsInstalled }).Count
-        Write-Output "INSTALLED:$success"
+    if callback:
+        callback(f"Encontrados {len(dispositivos_faltantes)} dispositivos sin driver...", 25)
+
+    # 3. Intentar instalar drivers para dispositivos faltantes usando Windows Update
+    if dispositivos_faltantes:
+        for i, dispositivo in enumerate(dispositivos_faltantes):
+            instance_id = dispositivo.get('InstanceId', '')
+            nombre = dispositivo.get('FriendlyName') or 'Dispositivo desconocido'
+
+            if callback:
+                progreso = 25 + int((i / len(dispositivos_faltantes)) * 30)
+                callback(f"Buscando driver para: {nombre[:40]}...", progreso)
+
+            # Intentar actualizar driver específico
+            comando_update = f'''
+            $device = Get-PnpDevice | Where-Object {{ $_.InstanceId -eq "{instance_id}" }}
+            if ($device) {{
+                try {{
+                    $result = & pnputil /add-driver C:\\Windows\\INF\\*.inf /subdirs /install 2>&1
+                    Write-Output "ATTEMPTED"
+                }} catch {{
+                    Write-Output "ERROR"
+                }}
+            }}
+            '''
+            ejecutar_powershell(comando_update)
+
+    if callback:
+        callback("Buscando actualizaciones en Windows Update...", 60)
+
+    # 4. Buscar e instalar actualizaciones de drivers via Windows Update
+    comando_wu = """
+    try {
+        $UpdateSession = New-Object -ComObject Microsoft.Update.Session
+        $UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
+        $Updates = $UpdateSearcher.Search("IsInstalled=0 and Type='Driver'")
+
+        if ($Updates.Updates.Count -eq 0) {
+            Write-Output "NO_UPDATES:0"
+        } else {
+            $Downloader = $UpdateSession.CreateUpdateDownloader()
+            $Downloader.Updates = $Updates.Updates
+            $DownloadResult = $Downloader.Download()
+
+            $Installer = $UpdateSession.CreateUpdateInstaller()
+            $Installer.Updates = $Updates.Updates
+            $InstallResult = $Installer.Install()
+
+            $success = 0
+            for ($i = 0; $i -lt $Updates.Updates.Count; $i++) {
+                if ($InstallResult.GetUpdateResult($i).ResultCode -eq 2) {
+                    $success++
+                }
+            }
+            Write-Output "INSTALLED:$success"
+        }
+    } catch {
+        Write-Output "ERROR:$($_.Exception.Message)"
     }
     """
 
     if callback:
-        callback("Descargando e instalando drivers...", 60)
+        callback("Descargando e instalando drivers...", 75)
 
-    exito, salida = ejecutar_powershell(comando)
+    exito, salida = ejecutar_powershell(comando_wu)
+
+    if "INSTALLED:" in salida:
+        try:
+            count = int(salida.split("INSTALLED:")[1].split()[0].strip())
+            drivers_instalados += count
+            mensajes.append(f"{count} drivers de Windows Update")
+        except:
+            pass
+
+    if callback:
+        callback("Verificando instalación...", 90)
+
+    # 5. Escanear nuevamente para aplicar cambios
+    ejecutar_cmd("pnputil /scan-devices")
 
     if callback:
         callback("Proceso completado", 100)
 
-    if "NO_UPDATES" in salida:
+    # Construir mensaje final
+    if drivers_instalados > 0:
+        return drivers_instalados, 0, f"Se instalaron {drivers_instalados} drivers. Reinicia para aplicar cambios."
+    elif len(dispositivos_faltantes) > 0:
+        return 0, len(dispositivos_faltantes), f"No se encontraron drivers automáticos para {len(dispositivos_faltantes)} dispositivos. Descárgalos del fabricante."
+    else:
         return 0, 0, "Todos los drivers están actualizados"
-    elif "INSTALLED:" in salida:
-        try:
-            count = int(salida.split("INSTALLED:")[1].strip())
-            return count, 0, f"Se actualizaron {count} drivers"
-        except:
-            pass
-
-    return 0, 0, "Proceso completado"
 
 
 def exportar_reporte_drivers(drivers: List[DriverInfo], ruta: str) -> tuple[bool, str]:

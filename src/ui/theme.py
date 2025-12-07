@@ -128,7 +128,7 @@ def crear_boton_grande(
         shadow=SHADOW,
         on_click=on_click,
         ink=True,
-        animate=ft.animation.Animation(200, ft.AnimationCurve.EASE_OUT),
+        animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
     )
 
 
@@ -332,7 +332,7 @@ def crear_boton_scan(on_click=None, scanning: bool = False) -> ft.Container:
                     height=200,
                     border_radius=100,
                     border=ft.border.all(3, COLORS["primary"]) if not scanning else None,
-                    animate=ft.animation.Animation(1000, ft.AnimationCurve.EASE_IN_OUT),
+                    animate=ft.Animation(1000, ft.AnimationCurve.EASE_IN_OUT),
                 ),
                 # Círculo interior con gradiente
                 ft.Container(
@@ -448,7 +448,7 @@ def crear_sidebar_item(icono, texto: str, activo: bool = False, on_click=None) -
         bgcolor=COLORS["sidebar_active"] if activo else None,
         on_click=on_click,
         ink=True,
-        animate=ft.animation.Animation(200, ft.AnimationCurve.EASE_OUT),
+        animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
     )
 
 

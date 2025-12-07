@@ -118,21 +118,21 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                     ft.Column(
                         controls=[
                             ft.Text(
-                                driver.nombre[:50] + "..." if len(driver.nombre) > 50 else driver.nombre,
+                                (driver.nombre or "Dispositivo desconocido")[:50] + ("..." if driver.nombre and len(driver.nombre) > 50 else ""),
                                 size=14,
                                 weight=ft.FontWeight.W_600,
                                 color=theme.COLORS["text"]
                             ),
                             ft.Row(
                                 controls=[
-                                    ft.Text(driver.fabricante, size=12, color=theme.COLORS["text_secondary"]),
+                                    ft.Text(driver.fabricante or "Desconocido", size=12, color=theme.COLORS["text_secondary"]),
                                     ft.Container(
                                         width=4,
                                         height=4,
                                         border_radius=2,
                                         bgcolor=theme.COLORS["text_muted"],
                                     ),
-                                    ft.Text(f"v{driver.version}", size=12, color=theme.COLORS["text_muted"]),
+                                    ft.Text(f"v{driver.version or 'N/A'}", size=12, color=theme.COLORS["text_muted"]),
                                 ],
                                 spacing=8,
                             ),

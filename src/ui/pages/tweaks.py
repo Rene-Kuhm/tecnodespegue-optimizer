@@ -152,7 +152,7 @@ def crear_pagina_tweaks(page: ft.Page = None) -> ft.Column:
                 bgcolor=theme.COLORS["primary"] if cat == categoria_actual[0] else theme.COLORS["surface_light"],
                 on_click=lambda e, c=cat: cambiar_categoria(c),
                 ink=True,
-                animate=ft.animation.Animation(200, ft.AnimationCurve.EASE_OUT),
+                animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
             )
             for cat in CategoriaTweak
         ],

@@ -292,7 +292,7 @@ class TecnodespegueOptimizer:
             bgcolor=theme.COLORS["sidebar_active"] if is_selected else None,
             on_click=lambda e, idx=index: self._cambiar_pagina(idx),
             ink=True,
-            animate=ft.animation.Animation(200, ft.AnimationCurve.EASE_OUT),
+            animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
             data=index,
         )
 
