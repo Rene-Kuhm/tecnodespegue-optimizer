@@ -13,6 +13,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.ui import theme
+from src.ui.splash import mostrar_splash
 from src.ui.pages.inicio import PaginaInicio
 from src.ui.pages.tweaks import PaginaTweaks
 from src.ui.pages.bloatware import PaginaBloatware
@@ -439,8 +440,26 @@ class TecnodespegueOptimizer:
 
 
 def main(page: ft.Page):
-    """Punto de entrada de la aplicación."""
-    TecnodespegueOptimizer(page)
+    """Punto de entrada de la aplicación con splash screen."""
+    # Configurar página inicial
+    page.title = "Tecnodespegue Optimizer"
+    page.bgcolor = theme.COLORS["background"]
+    page.padding = 0
+    page.window.width = 1400
+    page.window.height = 900
+    page.window.min_width = 1100
+    page.window.min_height = 700
+    page.theme_mode = ft.ThemeMode.DARK
+    page.window.center()
+
+    def iniciar_app():
+        """Inicia la aplicación principal después del splash."""
+        page.controls.clear()
+        page.update()
+        TecnodespegueOptimizer(page)
+
+    # Mostrar splash screen animado
+    mostrar_splash(page, iniciar_app)
 
 
 if __name__ == "__main__":
