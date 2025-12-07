@@ -28,7 +28,7 @@ class TecnodespegueOptimizer:
         self.page = page
         self.pagina_actual = 0
         self.contenido = None
-        self.nav_rail = None
+        self.nav_buttons = []
 
         self._configurar_pagina()
         self._construir_ui()
@@ -38,10 +38,10 @@ class TecnodespegueOptimizer:
         self.page.title = "Tecnodespegue Optimizer - Windows 11 25H2"
         self.page.bgcolor = theme.COLORS["background"]
         self.page.padding = 0
-        self.page.window.width = 1200
-        self.page.window.height = 800
-        self.page.window.min_width = 900
-        self.page.window.min_height = 600
+        self.page.window.width = 1280
+        self.page.window.height = 850
+        self.page.window.min_width = 1000
+        self.page.window.min_height = 650
         self.page.theme_mode = ft.ThemeMode.DARK
         self.page.window.center()
 
@@ -51,130 +51,196 @@ class TecnodespegueOptimizer:
             font_family="Segoe UI",
         )
 
+    def _crear_nav_button(self, icono, label, index):
+        """Crea un botón de navegación personalizado."""
+        is_selected = index == self.pagina_actual
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=ft.Icon(
+                            icono,
+                            size=24,
+                            color=theme.COLORS["primary"] if is_selected else theme.COLORS["text_muted"],
+                        ),
+                        padding=12,
+                        border_radius=14,
+                        bgcolor=ft.Colors.with_opacity(0.15, theme.COLORS["primary"]) if is_selected else None,
+                    ),
+                    ft.Text(
+                        label,
+                        size=11,
+                        weight=ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_400,
+                        color=theme.COLORS["text"] if is_selected else theme.COLORS["text_muted"],
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=6,
+            ),
+            padding=ft.padding.symmetric(vertical=8, horizontal=4),
+            border_radius=16,
+            on_click=lambda e, idx=index: self._cambiar_pagina_custom(idx),
+            ink=True,
+            data=index,
+        )
+
     def _construir_ui(self):
         """Construye la interfaz de usuario."""
         # Verificar permisos de administrador
         if not es_administrador():
             self._mostrar_advertencia_admin()
 
-        # Navegación lateral con altura fija
+        # Navegación lateral personalizada
         nav_items = [
             (ft.Icons.DASHBOARD_ROUNDED, "Inicio"),
             (ft.Icons.TUNE_ROUNDED, "Tweaks"),
             (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware"),
             (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza"),
-            (ft.Icons.SETTINGS_APPLICATIONS_ROUNDED, "Servicios"),
+            (ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED, "Servicios"),
         ]
 
-        self.nav_rail = ft.NavigationRail(
-            selected_index=self.pagina_actual,
-            label_type=ft.NavigationRailLabelType.ALL,
-            min_width=100,
-            min_extended_width=200,
-            bgcolor=theme.COLORS["surface"],
-            indicator_color=theme.COLORS["primary"],
-            height=300,  # Altura fija para evitar el error
-            destinations=[
-                ft.NavigationRailDestination(
-                    icon=icono,
-                    selected_icon=icono,
-                    label=nombre,
-                )
-                for icono, nombre in nav_items
-            ],
-            on_change=self._cambiar_pagina,
+        self.nav_buttons = [
+            self._crear_nav_button(icono, label, i)
+            for i, (icono, label) in enumerate(nav_items)
+        ]
+
+        nav_column = ft.Column(
+            controls=self.nav_buttons,
+            spacing=4,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        # Logo profesional en la parte superior
+        # Logo profesional premium
         logo = ft.Container(
             content=ft.Column(
                 controls=[
                     ft.Container(
-                        content=ft.Icon(ft.Icons.ROCKET_LAUNCH_ROUNDED, size=48, color=theme.COLORS["primary"]),
-                        padding=10,
-                        border_radius=15,
-                        bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["primary"]),
+                        content=ft.Stack(
+                            controls=[
+                                ft.Container(
+                                    width=60,
+                                    height=60,
+                                    border_radius=20,
+                                    gradient=ft.LinearGradient(
+                                        begin=ft.alignment.top_left,
+                                        end=ft.alignment.bottom_right,
+                                        colors=[theme.COLORS["primary"], theme.COLORS["secondary"]],
+                                    ),
+                                ),
+                                ft.Container(
+                                    content=ft.Icon(ft.Icons.ROCKET_LAUNCH_ROUNDED, size=32, color=ft.Colors.WHITE),
+                                    width=60,
+                                    height=60,
+                                    alignment=ft.alignment.center,
+                                ),
+                            ],
+                        ),
                     ),
+                    ft.Container(height=8),
                     ft.Text(
                         "Tecnodespegue",
-                        size=13,
+                        size=12,
                         weight=ft.FontWeight.BOLD,
                         color=theme.COLORS["text"],
                         text_align=ft.TextAlign.CENTER,
                     ),
                     ft.Text(
                         "OPTIMIZER",
-                        size=10,
+                        size=9,
                         weight=ft.FontWeight.W_600,
                         color=theme.COLORS["primary"],
                         text_align=ft.TextAlign.CENTER,
-                        letter_spacing=2,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=2,
+            ),
+            padding=ft.padding.symmetric(vertical=28, horizontal=10),
+            alignment=ft.alignment.center,
+        )
+
+        # Estado de admin premium
+        is_admin = es_administrador()
+        admin_badge = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=ft.Icon(
+                            ft.Icons.VERIFIED_USER_ROUNDED if is_admin else ft.Icons.SHIELD_OUTLINED,
+                            size=18,
+                            color=ft.Colors.WHITE,
+                        ),
+                        padding=8,
+                        border_radius=10,
+                        bgcolor=theme.COLORS["success"] if is_admin else theme.COLORS["warning"],
+                    ),
+                    ft.Text(
+                        "Admin" if is_admin else "Usuario",
+                        size=10,
+                        weight=ft.FontWeight.W_500,
+                        color=theme.COLORS["text_secondary"],
+                        text_align=ft.TextAlign.CENTER,
                     ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=6,
             ),
-            padding=ft.padding.symmetric(vertical=24, horizontal=10),
-            alignment=ft.alignment.center,
-        )
-
-        # Estado de admin con mejor diseño
-        is_admin = es_administrador()
-        admin_badge = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Icon(
-                        ft.Icons.VERIFIED_USER_ROUNDED if is_admin else ft.Icons.SHIELD_OUTLINED,
-                        size=20,
-                        color=theme.COLORS["success"] if is_admin else theme.COLORS["warning"],
-                    ),
-                    ft.Text(
-                        "Administrador" if is_admin else "Usuario",
-                        size=10,
-                        weight=ft.FontWeight.W_500,
-                        color=theme.COLORS["success"] if is_admin else theme.COLORS["warning"],
-                        text_align=ft.TextAlign.CENTER,
-                    ),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=4,
-            ),
             padding=ft.padding.symmetric(vertical=12, horizontal=16),
-            border_radius=12,
-            bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["success"] if is_admin else theme.COLORS["warning"]),
-            margin=ft.margin.symmetric(horizontal=10),
+            margin=ft.margin.symmetric(horizontal=8),
         )
 
         # Versión
         version_text = ft.Container(
-            content=ft.Text(
-                "v1.0.0",
-                size=10,
-                color=theme.COLORS["text_secondary"],
-                text_align=ft.TextAlign.CENTER,
+            content=ft.Row(
+                controls=[
+                    ft.Container(
+                        width=6,
+                        height=6,
+                        border_radius=3,
+                        bgcolor=theme.COLORS["success"],
+                    ),
+                    ft.Text(
+                        "v1.0.0",
+                        size=10,
+                        color=theme.COLORS["text_muted"],
+                    ),
+                ],
+                spacing=6,
+                alignment=ft.MainAxisAlignment.CENTER,
             ),
-            padding=ft.padding.only(bottom=16),
+            padding=ft.padding.only(bottom=20),
         )
 
-        # Panel lateral completo con altura expandida
+        # Panel lateral premium
         sidebar = ft.Container(
             content=ft.Column(
                 controls=[
                     logo,
-                    ft.Divider(height=1, color=theme.COLORS["surface_light"]),
                     ft.Container(
-                        content=self.nav_rail,
-                        padding=ft.padding.symmetric(vertical=10),
+                        content=ft.Container(
+                            width=40,
+                            height=2,
+                            border_radius=1,
+                            bgcolor=theme.COLORS["border"],
+                        ),
+                        alignment=ft.alignment.center,
                     ),
-                    ft.Container(expand=True),  # Espacio flexible
+                    ft.Container(height=16),
+                    ft.Container(
+                        content=nav_column,
+                        padding=ft.padding.symmetric(horizontal=8),
+                    ),
+                    ft.Container(expand=True),
                     admin_badge,
                     version_text,
                 ],
                 spacing=0,
             ),
-            width=130,
+            width=140,
             bgcolor=theme.COLORS["surface"],
-            expand=True,
+            border=ft.border.only(right=ft.BorderSide(1, theme.COLORS["border"])),
         )
 
         # Contenido principal
@@ -190,7 +256,6 @@ class TecnodespegueOptimizer:
             ft.Row(
                 controls=[
                     sidebar,
-                    ft.VerticalDivider(width=1, color=theme.COLORS["surface_light"]),
                     self.contenido,
                 ],
                 expand=True,
@@ -198,9 +263,25 @@ class TecnodespegueOptimizer:
             )
         )
 
-    def _cambiar_pagina(self, e):
-        """Cambia la página actual."""
-        self.pagina_actual = e.control.selected_index
+    def _cambiar_pagina_custom(self, index):
+        """Cambia la página actual con navegación personalizada."""
+        self.pagina_actual = index
+
+        # Actualizar botones de navegación
+        nav_items = [
+            (ft.Icons.DASHBOARD_ROUNDED, "Inicio"),
+            (ft.Icons.TUNE_ROUNDED, "Tweaks"),
+            (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware"),
+            (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza"),
+            (ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED, "Servicios"),
+        ]
+
+        for i, btn in enumerate(self.nav_buttons):
+            is_selected = i == index
+            btn.content.controls[0].bgcolor = ft.Colors.with_opacity(0.15, theme.COLORS["primary"]) if is_selected else None
+            btn.content.controls[0].content.color = theme.COLORS["primary"] if is_selected else theme.COLORS["text_muted"]
+            btn.content.controls[1].weight = ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_400
+            btn.content.controls[1].color = theme.COLORS["text"] if is_selected else theme.COLORS["text_muted"]
 
         paginas = [
             lambda: PaginaInicio(self.page),
@@ -210,7 +291,7 @@ class TecnodespegueOptimizer:
             lambda: PaginaServicios(self.page),
         ]
 
-        self.contenido.content = paginas[self.pagina_actual]()
+        self.contenido.content = paginas[index]()
         self.page.update()
 
     def _mostrar_advertencia_admin(self):
