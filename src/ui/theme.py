@@ -32,6 +32,13 @@ COLORS = {
     "speed_orange": "#fdcb6e",
     "apps_cyan": "#74b9ff",
 
+    # Colores de acento adicionales
+    "accent_orange": "#e17055",
+    "accent_cyan": "#00cec9",
+    "accent_purple": "#6c5ce7",
+    "accent_green": "#00b894",
+    "accent_red": "#ff7675",
+
     # Gradientes principales
     "gradient_scan": ["#00cec9", "#6c5ce7"],
     "gradient_clean": ["#00b894", "#55efc4"],
@@ -40,6 +47,14 @@ COLORS = {
     "gradient_primary": ["#6c5ce7", "#a29bfe"],
     "gradient_accent": ["#00cec9", "#00b894"],
     "gradient_purple_pink": ["#6c5ce7", "#fd79a8"],
+
+    # Gradientes adicionales para páginas
+    "gradient_blue": ["#00cec9", "#0984e3"],
+    "gradient_purple": ["#6c5ce7", "#a29bfe"],
+    "gradient_green": ["#00b894", "#55efc4"],
+    "gradient_orange": ["#fdcb6e", "#e17055"],
+    "gradient_cyan": ["#74b9ff", "#0984e3"],
+    "gradient_red": ["#ff7675", "#d63031"],
 
     # Texto
     "text": "#ffffff",
