@@ -3,7 +3,7 @@ import flet as ft
 from src.ui import theme
 from src.modules.drivers import (
     escanear_drivers, actualizar_todos_drivers, buscar_actualizaciones_windows,
-    EstadoDriver, CategoriaDriver, DriverInfo, ResultadoEscaneo
+    verificar_estado_drivers, EstadoDriver, CategoriaDriver, DriverInfo, ResultadoEscaneo
 )
 import threading
 
@@ -24,6 +24,53 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
         height=8,
         border_radius=4,
         visible=False
+    )
+
+    # Banner de estado "¡Perfecto!"
+    banner_perfecto = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Container(
+                    content=ft.Icon(ft.Icons.CHECK_CIRCLE_ROUNDED, size=32, color=ft.Colors.WHITE),
+                    padding=12,
+                    border_radius=16,
+                    bgcolor=ft.Colors.with_opacity(0.2, ft.Colors.WHITE),
+                ),
+                ft.Column(
+                    controls=[
+                        ft.Text(
+                            "¡Todo Perfecto!",
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.WHITE,
+                        ),
+                        ft.Text(
+                            "Todos los drivers están instalados y actualizados",
+                            size=13,
+                            color=ft.Colors.with_opacity(0.9, ft.Colors.WHITE),
+                        ),
+                    ],
+                    spacing=4,
+                    expand=True,
+                ),
+                ft.Icon(ft.Icons.VERIFIED_ROUNDED, size=40, color=ft.Colors.with_opacity(0.8, ft.Colors.WHITE)),
+            ],
+            spacing=16,
+        ),
+        padding=24,
+        border_radius=theme.BORDER_RADIUS,
+        gradient=ft.LinearGradient(
+            begin=ft.alignment.center_left,
+            end=ft.alignment.center_right,
+            colors=theme.COLORS["gradient_green"],
+        ),
+        shadow=ft.BoxShadow(
+            spread_radius=0,
+            blur_radius=25,
+            color=ft.Colors.with_opacity(0.4, theme.COLORS["success"]),
+            offset=ft.Offset(0, 10),
+        ),
+        visible=False,
     )
 
     # Stats cards
@@ -223,6 +270,7 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
         estado_texto.visible = True
         estado_texto.value = "Iniciando escaneo de drivers..."
         estado_texto.color = theme.COLORS["info"]
+        banner_perfecto.visible = False
         if page:
             page.update()
 
@@ -243,14 +291,23 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                 stat_problemas.value = str(resultado_escaneo.con_problemas)
                 stat_faltantes.value = str(resultado_escaneo.faltantes)
 
-                estado_texto.value = f"Escaneo completado: {resultado_escaneo.total} drivers encontrados"
-                estado_texto.color = theme.COLORS["success"]
+                # Mostrar banner si todo está perfecto
+                if resultado_escaneo.todos_ok:
+                    banner_perfecto.visible = True
+                    estado_texto.value = "¡Todos los drivers están perfectos!"
+                    estado_texto.color = theme.COLORS["success"]
+                else:
+                    banner_perfecto.visible = False
+                    problemas_total = resultado_escaneo.faltantes + resultado_escaneo.con_problemas
+                    estado_texto.value = f"Escaneo completado: {problemas_total} drivers necesitan atención"
+                    estado_texto.color = theme.COLORS["warning"] if problemas_total > 0 else theme.COLORS["success"]
 
                 actualizar_lista_drivers()
 
             except Exception as ex:
                 estado_texto.value = f"Error: {str(ex)}"
                 estado_texto.color = theme.COLORS["error"]
+                banner_perfecto.visible = False
 
             progreso_bar.visible = False
             if page:
@@ -258,13 +315,52 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
 
         threading.Thread(target=ejecutar).start()
 
+    def actualizar_driver_en_lista(device_id: str, exito: bool):
+        """Actualiza el estado de un driver específico en la lista sin re-escanear."""
+        nonlocal resultado_escaneo
+
+        if not resultado_escaneo:
+            return
+
+        # Buscar el driver en la lista y actualizar su estado
+        for driver in resultado_escaneo.drivers:
+            if driver.device_id == device_id:
+                if exito:
+                    driver.estado = EstadoDriver.OK
+                    driver.necesita_actualizacion = False
+                    # Actualizar contadores
+                    resultado_escaneo.faltantes = max(0, resultado_escaneo.faltantes - 1)
+                    resultado_escaneo.con_problemas = max(0, resultado_escaneo.con_problemas - 1)
+                    resultado_escaneo.actualizados += 1
+                break
+
+        # Verificar si todos están OK
+        resultado_escaneo.todos_ok = (
+            resultado_escaneo.faltantes == 0 and
+            resultado_escaneo.con_problemas == 0
+        )
+
+        # Actualizar stats en UI
+        stat_ok.value = str(resultado_escaneo.actualizados)
+        stat_problemas.value = str(resultado_escaneo.con_problemas)
+        stat_faltantes.value = str(resultado_escaneo.faltantes)
+
+        # Actualizar la lista visual
+        actualizar_lista_drivers()
+
+        if page:
+            page.update()
+
     def actualizar_click(e):
         """Actualiza todos los drivers."""
+        nonlocal resultado_escaneo
+
         progreso_bar.visible = True
         progreso_bar.value = None
         estado_texto.visible = True
         estado_texto.value = "Buscando actualizaciones de drivers..."
         estado_texto.color = theme.COLORS["info"]
+        banner_perfecto.visible = False
         if page:
             page.update()
 
@@ -275,14 +371,52 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
             if page:
                 page.update()
 
+        def on_driver_installed(device_id: str, exito: bool):
+            """Callback cuando un driver se instala - actualiza UI inmediatamente."""
+            actualizar_driver_en_lista(device_id, exito)
+
         def ejecutar():
+            nonlocal resultado_escaneo
+
             try:
-                exitosos, fallidos, mensaje = actualizar_todos_drivers(callback)
-                estado_texto.value = mensaje
-                estado_texto.color = theme.COLORS["success"] if exitosos > 0 else theme.COLORS["info"]
+                exitosos, fallidos, mensaje = actualizar_todos_drivers(callback, on_driver_installed)
+
+                # Actualizar stats finales
+                if resultado_escaneo:
+                    stat_total.value = str(resultado_escaneo.total)
+                    stat_ok.value = str(resultado_escaneo.actualizados)
+                    stat_problemas.value = str(resultado_escaneo.con_problemas)
+                    stat_faltantes.value = str(resultado_escaneo.faltantes)
+
+                # Mostrar resultado final
+                if resultado_escaneo and resultado_escaneo.todos_ok:
+                    banner_perfecto.visible = True
+                    estado_texto.value = "¡Perfecto! Todos los drivers están actualizados."
+                    estado_texto.color = theme.COLORS["success"]
+                elif fallidos == 0 and exitosos > 0:
+                    banner_perfecto.visible = True
+                    estado_texto.value = f"¡Perfecto! Se instalaron {exitosos} drivers correctamente."
+                    estado_texto.color = theme.COLORS["success"]
+                elif exitosos > 0:
+                    banner_perfecto.visible = False
+                    estado_texto.value = f"Se instalaron {exitosos} drivers. {fallidos} requieren atención manual."
+                    estado_texto.color = theme.COLORS["warning"]
+                else:
+                    banner_perfecto.visible = False
+                    estado_texto.value = mensaje
+                    estado_texto.color = theme.COLORS["info"] if "Perfecto" in mensaje else theme.COLORS["warning"]
+
+                    # Si el mensaje dice perfecto, mostrar banner
+                    if "Perfecto" in mensaje or "perfecto" in mensaje:
+                        banner_perfecto.visible = True
+                        estado_texto.color = theme.COLORS["success"]
+
+                actualizar_lista_drivers()
+
             except Exception as ex:
                 estado_texto.value = f"Error: {str(ex)}"
                 estado_texto.color = theme.COLORS["error"]
+                banner_perfecto.visible = False
 
             progreso_bar.visible = False
             if page:
@@ -428,6 +562,14 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
             ),
 
             ft.Container(height=20),
+
+            # Banner de "¡Todo Perfecto!"
+            ft.Container(
+                content=banner_perfecto,
+                padding=ft.padding.symmetric(horizontal=30),
+            ),
+
+            ft.Container(height=16),
 
             # Botones de acción
             ft.Container(

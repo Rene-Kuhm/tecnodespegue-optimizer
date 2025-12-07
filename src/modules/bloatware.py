@@ -141,3 +141,14 @@ def eliminar_todo_bloatware_recomendado() -> tuple[int, int]:
 def obtener_apps_por_categoria(categoria: CategoriaBloat) -> list[AppBloat]:
     """Obtiene las apps de una categoría específica."""
     return [app for app in BLOATWARE_APPS if app.categoria == categoria]
+
+
+def obtener_apps_instaladas_por_categoria(categoria: CategoriaBloat) -> list[AppBloat]:
+    """Obtiene las apps instaladas de una categoría específica."""
+    apps_categoria = [app for app in BLOATWARE_APPS if app.categoria == categoria]
+    return [app for app in apps_categoria if verificar_app_instalada(app.paquete)]
+
+
+def obtener_todo_bloatware_instalado() -> list[AppBloat]:
+    """Obtiene todo el bloatware que está instalado en el sistema."""
+    return [app for app in BLOATWARE_APPS if verificar_app_instalada(app.paquete)]

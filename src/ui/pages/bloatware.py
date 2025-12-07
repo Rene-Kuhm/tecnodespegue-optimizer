@@ -3,7 +3,8 @@ import flet as ft
 from src.ui import theme
 from src.modules.bloatware import (
     BLOATWARE_APPS, CategoriaBloat, desinstalar_app,
-    eliminar_todo_bloatware_recomendado, obtener_apps_por_categoria
+    eliminar_todo_bloatware_recomendado, obtener_apps_instaladas_por_categoria,
+    verificar_app_instalada
 )
 import threading
 
@@ -13,6 +14,7 @@ def crear_pagina_bloatware(page: ft.Page = None) -> ft.Column:
 
     categoria_actual = [CategoriaBloat.MICROSOFT]
     apps_seleccionadas = set()
+    apps_en_lista = []  # Lista local de apps mostradas
     contenedor_apps = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
     estado_texto = ft.Text("", size=14, visible=False)
     progreso_bar = ft.ProgressBar(
@@ -24,84 +26,160 @@ def crear_pagina_bloatware(page: ft.Page = None) -> ft.Column:
         visible=False
     )
 
-    def actualizar_lista_apps():
-        apps = obtener_apps_por_categoria(categoria_actual[0])
+    def crear_item_app(app):
+        """Crea un item de app para la lista."""
+        is_recomendado = app.recomendado_eliminar
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Checkbox(
+                        value=app.paquete in apps_seleccionadas,
+                        on_change=lambda e, a=app: toggle_app(a.paquete, e.control.value),
+                        active_color=theme.COLORS["accent_orange"],
+                    ),
+                    ft.Container(
+                        content=ft.Icon(
+                            ft.Icons.DELETE_SWEEP_ROUNDED if is_recomendado else ft.Icons.APPS_ROUNDED,
+                            size=20,
+                            color=theme.COLORS["accent_orange"] if is_recomendado else theme.COLORS["primary"]
+                        ),
+                        padding=10,
+                        border_radius=12,
+                        bgcolor=ft.Colors.with_opacity(
+                            0.1,
+                            theme.COLORS["accent_orange"] if is_recomendado else theme.COLORS["primary"]
+                        ),
+                    ),
+                    ft.Column(
+                        controls=[
+                            ft.Row(
+                                controls=[
+                                    ft.Text(
+                                        app.nombre,
+                                        size=14,
+                                        weight=ft.FontWeight.W_600,
+                                        color=theme.COLORS["text"]
+                                    ),
+                                    ft.Container(
+                                        content=ft.Text(
+                                            "Eliminar" if is_recomendado else "Conservar",
+                                            size=10,
+                                            weight=ft.FontWeight.W_500,
+                                            color=ft.Colors.WHITE
+                                        ),
+                                        padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                                        border_radius=12,
+                                        bgcolor=theme.COLORS["warning"] if is_recomendado else theme.COLORS["success"],
+                                    ),
+                                ],
+                                spacing=10,
+                            ),
+                            ft.Text(
+                                app.descripcion,
+                                size=12,
+                                color=theme.COLORS["text_muted"]
+                            ),
+                        ],
+                        spacing=4,
+                        expand=True,
+                    ),
+                    ft.Container(
+                        content=ft.Icon(ft.Icons.DELETE_OUTLINE_ROUNDED, size=20, color=theme.COLORS["error"]),
+                        padding=10,
+                        border_radius=10,
+                        bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["error"]),
+                        on_click=lambda e, a=app: eliminar_app_individual(a),
+                        ink=True,
+                    ),
+                ],
+                spacing=14,
+            ),
+            padding=18,
+            border_radius=theme.BORDER_RADIUS,
+            bgcolor=theme.COLORS["surface"],
+            border=ft.border.all(1, theme.COLORS["border"]),
+            data=app.paquete,  # Guardar paquete para identificación
+        )
+
+    def mostrar_mensaje_limpio():
+        """Muestra el mensaje de categoría limpia."""
         contenedor_apps.controls.clear()
-
-        for app in apps:
-            is_recomendado = app.recomendado_eliminar
-
-            item = ft.Container(
-                content=ft.Row(
+        contenedor_apps.controls.append(
+            ft.Container(
+                content=ft.Column(
                     controls=[
-                        ft.Checkbox(
-                            value=app.paquete in apps_seleccionadas,
-                            on_change=lambda e, a=app: toggle_app(a.paquete, e.control.value),
-                            active_color=theme.COLORS["accent_orange"],
-                        ),
-                        ft.Container(
-                            content=ft.Icon(
-                                ft.Icons.DELETE_SWEEP_ROUNDED if is_recomendado else ft.Icons.APPS_ROUNDED,
-                                size=20,
-                                color=theme.COLORS["accent_orange"] if is_recomendado else theme.COLORS["primary"]
-                            ),
-                            padding=10,
-                            border_radius=12,
-                            bgcolor=ft.Colors.with_opacity(
-                                0.1,
-                                theme.COLORS["accent_orange"] if is_recomendado else theme.COLORS["primary"]
-                            ),
-                        ),
-                        ft.Column(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Text(
-                                            app.nombre,
-                                            size=14,
-                                            weight=ft.FontWeight.W_600,
-                                            color=theme.COLORS["text"]
-                                        ),
-                                        ft.Container(
-                                            content=ft.Text(
-                                                "Eliminar" if is_recomendado else "Conservar",
-                                                size=10,
-                                                weight=ft.FontWeight.W_500,
-                                                color=ft.Colors.WHITE
-                                            ),
-                                            padding=ft.padding.symmetric(horizontal=10, vertical=4),
-                                            border_radius=12,
-                                            bgcolor=theme.COLORS["warning"] if is_recomendado else theme.COLORS["success"],
-                                        ),
-                                    ],
-                                    spacing=10,
-                                ),
-                                ft.Text(
-                                    app.descripcion,
-                                    size=12,
-                                    color=theme.COLORS["text_muted"]
-                                ),
-                            ],
-                            spacing=4,
-                            expand=True,
-                        ),
-                        ft.Container(
-                            content=ft.Icon(ft.Icons.DELETE_OUTLINE_ROUNDED, size=20, color=theme.COLORS["error"]),
-                            padding=10,
-                            border_radius=10,
-                            bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["error"]),
-                            on_click=lambda e, a=app: eliminar_app_individual(a),
-                            ink=True,
-                        ),
+                        ft.Icon(ft.Icons.CHECK_CIRCLE_ROUNDED, size=48, color=theme.COLORS["success"]),
+                        ft.Text("¡Limpio!", size=18, weight=ft.FontWeight.BOLD, color=theme.COLORS["text"]),
+                        ft.Text("No hay bloatware instalado en esta categoría", size=13, color=theme.COLORS["text_secondary"]),
                     ],
-                    spacing=14,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=8,
                 ),
-                padding=18,
-                border_radius=theme.BORDER_RADIUS,
-                bgcolor=theme.COLORS["surface"],
-                border=ft.border.all(1, theme.COLORS["border"]),
+                padding=40,
+                alignment=ft.alignment.center,
             )
-            contenedor_apps.controls.append(item)
+        )
+
+    def actualizar_lista_apps():
+        nonlocal apps_en_lista
+
+        # Mostrar indicador de carga
+        contenedor_apps.controls.clear()
+        contenedor_apps.controls.append(
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.ProgressRing(width=30, height=30, stroke_width=3, color=theme.COLORS["accent_orange"]),
+                        ft.Text("Buscando apps instaladas...", size=13, color=theme.COLORS["text_secondary"]),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=12,
+                ),
+                padding=40,
+                alignment=ft.alignment.center,
+            )
+        )
+        if page:
+            page.update()
+
+        def cargar():
+            nonlocal apps_en_lista
+            # Obtener solo las apps INSTALADAS de esta categoría
+            apps_en_lista = obtener_apps_instaladas_por_categoria(categoria_actual[0])
+            contenedor_apps.controls.clear()
+
+            if not apps_en_lista:
+                mostrar_mensaje_limpio()
+            else:
+                for app in apps_en_lista:
+                    contenedor_apps.controls.append(crear_item_app(app))
+
+            if page:
+                page.update()
+
+        threading.Thread(target=cargar).start()
+
+    def eliminar_app_de_lista(paquete: str):
+        """Elimina una app de la lista visual sin recargar."""
+        nonlocal apps_en_lista
+        # Eliminar de la lista local
+        apps_en_lista = [a for a in apps_en_lista if a.paquete != paquete]
+        # Eliminar de seleccionadas si estaba
+        apps_seleccionadas.discard(paquete)
+
+        # Eliminar el contenedor de la UI
+        contenedor_apps.controls = [
+            ctrl for ctrl in contenedor_apps.controls
+            if not (hasattr(ctrl, 'data') and ctrl.data == paquete)
+        ]
+
+        # Si no quedan apps, mostrar mensaje de limpio
+        if not apps_en_lista:
+            mostrar_mensaje_limpio()
+
+        if page:
+            page.update()
 
     def toggle_app(paquete: str, seleccionado: bool):
         if seleccionado:
@@ -131,8 +209,14 @@ def crear_pagina_bloatware(page: ft.Page = None) -> ft.Column:
 
         def ejecutar():
             exito, _ = desinstalar_app(app.paquete)
-            estado_texto.value = f"{app.nombre} eliminado correctamente" if exito else f"Error al eliminar {app.nombre}"
-            estado_texto.color = theme.COLORS["success"] if exito else theme.COLORS["error"]
+            if exito:
+                estado_texto.value = f"{app.nombre} eliminado correctamente"
+                estado_texto.color = theme.COLORS["success"]
+                # Eliminar de la lista inmediatamente
+                eliminar_app_de_lista(app.paquete)
+            else:
+                estado_texto.value = f"Error al eliminar {app.nombre}"
+                estado_texto.color = theme.COLORS["error"]
             if page:
                 page.update()
 
@@ -149,19 +233,26 @@ def crear_pagina_bloatware(page: ft.Page = None) -> ft.Column:
         def ejecutar():
             total = len(apps_seleccionadas)
             exitosos = 0
+            paquetes_eliminados = []
+
             for i, paquete in enumerate(list(apps_seleccionadas)):
                 estado_texto.value = f"Eliminando aplicación {i + 1} de {total}..."
                 progreso_bar.value = (i + 1) / total
                 if page:
                     page.update()
+
                 exito, _ = desinstalar_app(paquete)
                 if exito:
                     exitosos += 1
+                    paquetes_eliminados.append(paquete)
+                    # Eliminar de la lista inmediatamente
+                    eliminar_app_de_lista(paquete)
+
             estado_texto.value = f"Completado: {exitosos} de {total} apps eliminadas"
             estado_texto.color = theme.COLORS["success"]
             progreso_bar.visible = False
             apps_seleccionadas.clear()
-            actualizar_lista_apps()
+
             if page:
                 page.update()
 
@@ -177,11 +268,29 @@ def crear_pagina_bloatware(page: ft.Page = None) -> ft.Column:
             page.update()
 
         def ejecutar():
-            exitosos, fallidos = eliminar_todo_bloatware_recomendado()
+            nonlocal apps_en_lista
+
+            # Obtener apps recomendadas de la lista actual
+            apps_recomendadas = [a for a in apps_en_lista if a.recomendado_eliminar]
+            total = len(apps_recomendadas)
+            exitosos = 0
+
+            for i, app in enumerate(apps_recomendadas):
+                estado_texto.value = f"Eliminando {app.nombre}... ({i + 1}/{total})"
+                progreso_bar.value = (i + 1) / total
+                if page:
+                    page.update()
+
+                exito, _ = desinstalar_app(app.paquete)
+                if exito:
+                    exitosos += 1
+                    # Eliminar de la lista inmediatamente
+                    eliminar_app_de_lista(app.paquete)
+
             estado_texto.value = f"Completado: {exitosos} aplicaciones eliminadas"
             estado_texto.color = theme.COLORS["success"]
             progreso_bar.visible = False
-            actualizar_lista_apps()
+
             if page:
                 page.update()
 
