@@ -1,4 +1,4 @@
-"""Página de limpieza del sistema."""
+"""Página de limpieza del sistema - Estilo CleanMyMac."""
 import flet as ft
 from src.ui import theme
 from src.modules.limpieza import (
@@ -10,27 +10,56 @@ import threading
 
 
 def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
-    """Página de limpieza del sistema."""
+    """Página de limpieza del sistema con estilo CleanMyMac."""
 
     resultados_lista = ft.Column(spacing=8, scroll=ft.ScrollMode.AUTO)
-    total_liberado = ft.Text("0 MB liberados", size=32, weight=ft.FontWeight.BOLD, color=theme.COLORS["primary"])
-    progreso_bar = ft.ProgressBar(value=0, color=theme.COLORS["primary"], bgcolor=theme.COLORS["surface_light"], height=8, visible=False)
+    total_liberado = ft.Text(
+        "0 MB",
+        size=48,
+        weight=ft.FontWeight.BOLD,
+        color=theme.COLORS["success"],
+    )
+    progreso_bar = ft.ProgressBar(
+        value=0,
+        color=theme.COLORS["success"],
+        bgcolor=theme.COLORS["surface_elevated"],
+        height=8,
+        border_radius=4,
+        visible=False
+    )
 
     total_acumulado = [0.0]
+    btn_limpiar = None
 
     def agregar_resultado(resultado):
-        icono = ft.Icons.CHECK_CIRCLE if resultado.exito else ft.Icons.ERROR
+        icono = ft.Icons.CHECK_CIRCLE_ROUNDED if resultado.exito else ft.Icons.ERROR_ROUNDED
         color = theme.COLORS["success"] if resultado.exito else theme.COLORS["error"]
+
         item = ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Icon(icono, color=color, size=20),
-                    ft.Text(resultado.nombre, size=14, color=theme.COLORS["text"], expand=True),
-                    ft.Text(f"{resultado.espacio_liberado_mb:.2f} MB", size=14, weight=ft.FontWeight.BOLD, color=theme.COLORS["secondary"]),
+                    ft.Container(
+                        content=ft.Icon(icono, size=18, color=color),
+                        padding=8,
+                        border_radius=10,
+                        bgcolor=ft.Colors.with_opacity(0.1, color),
+                    ),
+                    ft.Text(
+                        resultado.nombre,
+                        size=14,
+                        color=theme.COLORS["text"],
+                        expand=True
+                    ),
+                    ft.Text(
+                        f"+{resultado.espacio_liberado_mb:.1f} MB",
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=theme.COLORS["success"] if resultado.espacio_liberado_mb > 0 else theme.COLORS["text_muted"]
+                    ),
                 ],
-                spacing=12,
+                spacing=14,
             ),
-            padding=12,
+            padding=14,
             border_radius=theme.BORDER_RADIUS_SM,
             bgcolor=theme.COLORS["surface_light"],
         )
@@ -38,7 +67,10 @@ def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
 
     def actualizar_total(mb: float):
         total_acumulado[0] += mb
-        total_liberado.value = f"{total_acumulado[0]:.2f} MB liberados"
+        if total_acumulado[0] >= 1024:
+            total_liberado.value = f"{total_acumulado[0] / 1024:.2f} GB"
+        else:
+            total_liberado.value = f"{total_acumulado[0]:.1f} MB"
 
     def limpiar_individual(funcion, nombre: str):
         def ejecutar():
@@ -52,10 +84,9 @@ def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
     def limpiar_todo(e):
         progreso_bar.visible = True
         progreso_bar.value = None
-        btn_limpiar.disabled = True
         resultados_lista.controls.clear()
         total_acumulado[0] = 0
-        total_liberado.value = "0 MB liberados"
+        total_liberado.value = "0 MB"
         if page:
             page.update()
 
@@ -67,71 +98,220 @@ def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
                 total_acumulado[0] += resultado.espacio_liberado_mb
                 if page:
                     page.update()
-            total_liberado.value = f"{total_acumulado[0]:.2f} MB liberados"
+
+            if total_acumulado[0] >= 1024:
+                total_liberado.value = f"{total_acumulado[0] / 1024:.2f} GB"
+            else:
+                total_liberado.value = f"{total_acumulado[0]:.1f} MB"
+
             progreso_bar.visible = False
-            btn_limpiar.disabled = False
             if page:
                 page.update()
 
         threading.Thread(target=ejecutar).start()
 
-    # Opciones de limpieza
+    # Opciones de limpieza con iconos mejorados
     opciones = [
-        ("Archivos Temporales (Usuario)", ft.Icons.FOLDER_DELETE, limpiar_temp_usuario),
-        ("Archivos Temporales (Windows)", ft.Icons.FOLDER_DELETE, limpiar_temp_windows),
-        ("Prefetch", ft.Icons.SPEED, limpiar_prefetch),
-        ("Caché de Windows Update", ft.Icons.UPDATE, limpiar_cache_windows_update),
-        ("Caché de Miniaturas", ft.Icons.IMAGE, limpiar_thumbnails),
-        ("Logs de Windows", ft.Icons.DESCRIPTION, limpiar_logs_windows),
-        ("Papelera de Reciclaje", ft.Icons.DELETE_SWEEP, limpiar_papelera),
+        ("Archivos Temporales", ft.Icons.FOLDER_DELETE_ROUNDED, limpiar_temp_usuario, theme.COLORS["accent_blue"]),
+        ("Caché de Windows", ft.Icons.CACHED_ROUNDED, limpiar_temp_windows, theme.COLORS["accent_purple"]),
+        ("Prefetch", ft.Icons.SPEED_ROUNDED, limpiar_prefetch, theme.COLORS["accent_orange"]),
+        ("Windows Update", ft.Icons.UPDATE_ROUNDED, limpiar_cache_windows_update, theme.COLORS["primary"]),
+        ("Miniaturas", ft.Icons.IMAGE_ROUNDED, limpiar_thumbnails, theme.COLORS["accent_pink"]),
+        ("Logs del Sistema", ft.Icons.DESCRIPTION_ROUNDED, limpiar_logs_windows, theme.COLORS["info"]),
+        ("Papelera", ft.Icons.DELETE_SWEEP_ROUNDED, limpiar_papelera, theme.COLORS["error"]),
     ]
 
     items_limpieza = []
-    for nombre, icono, funcion in opciones:
+    for nombre, icono, funcion, color in opciones:
         item = ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Icon(icono, color=theme.COLORS["primary"], size=24),
-                    ft.Text(nombre, size=14, color=theme.COLORS["text"], expand=True),
-                    ft.IconButton(icon=ft.Icons.CLEANING_SERVICES, icon_color=theme.COLORS["secondary"], on_click=lambda e, f=funcion, n=nombre: limpiar_individual(f, n)),
+                    ft.Container(
+                        content=ft.Icon(icono, size=22, color=color),
+                        padding=12,
+                        border_radius=14,
+                        bgcolor=ft.Colors.with_opacity(0.1, color),
+                    ),
+                    ft.Text(
+                        nombre,
+                        size=14,
+                        weight=ft.FontWeight.W_500,
+                        color=theme.COLORS["text"],
+                        expand=True
+                    ),
+                    ft.Container(
+                        content=ft.Icon(ft.Icons.CLEANING_SERVICES_ROUNDED, size=18, color=ft.Colors.WHITE),
+                        padding=10,
+                        border_radius=10,
+                        bgcolor=color,
+                        on_click=lambda e, f=funcion, n=nombre: limpiar_individual(f, n),
+                        ink=True,
+                    ),
                 ],
-                spacing=12,
+                spacing=16,
             ),
             padding=16,
-            border_radius=theme.BORDER_RADIUS_SM,
-            bgcolor=theme.COLORS["surface_light"],
+            border_radius=theme.BORDER_RADIUS,
+            bgcolor=theme.COLORS["surface"],
+            border=ft.border.all(1, theme.COLORS["border"]),
         )
         items_limpieza.append(item)
 
-    btn_limpiar = ft.ElevatedButton(
-        text="Limpieza Completa",
-        icon=ft.Icons.AUTO_DELETE,
+    # Botón de limpieza completa
+    btn_limpiar = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.AUTO_DELETE_ROUNDED, size=24, color=ft.Colors.WHITE),
+                ft.Text("Limpieza Completa", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ],
+            spacing=12,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        padding=ft.padding.symmetric(horizontal=40, vertical=18),
+        border_radius=theme.BORDER_RADIUS,
+        gradient=ft.LinearGradient(
+            begin=ft.alignment.center_left,
+            end=ft.alignment.center_right,
+            colors=theme.COLORS["gradient_green"],
+        ),
         on_click=limpiar_todo,
-        style=ft.ButtonStyle(color=ft.Colors.WHITE, bgcolor=theme.COLORS["primary"], padding=ft.padding.symmetric(horizontal=32, vertical=16)),
+        ink=True,
+        shadow=ft.BoxShadow(
+            spread_radius=0,
+            blur_radius=25,
+            color=ft.Colors.with_opacity(0.4, theme.COLORS["success"]),
+            offset=ft.Offset(0, 10),
+        ),
     )
 
     return ft.Column(
         controls=[
-            ft.Container(content=ft.Column(controls=[theme.crear_titulo("Limpieza del Sistema", 24), theme.crear_subtitulo("Elimina archivos temporales y libera espacio")]), padding=20),
+            # Header
             ft.Container(
-                content=theme.crear_card(ft.Row(controls=[
-                    ft.Column(controls=[ft.Text("Espacio Liberado", size=14, color=theme.COLORS["text_secondary"]), total_liberado], spacing=4),
-                    ft.VerticalDivider(width=1, color=theme.COLORS["surface_light"]),
-                    ft.Column(controls=[progreso_bar, btn_limpiar], spacing=16, horizontal_alignment=ft.CrossAxisAlignment.CENTER, expand=True),
-                ], spacing=32)),
-                padding=ft.padding.symmetric(horizontal=20),
+                content=ft.Row(
+                    controls=[
+                        ft.Container(
+                            content=ft.Icon(ft.Icons.CLEANING_SERVICES_ROUNDED, size=40, color=ft.Colors.WHITE),
+                            padding=16,
+                            border_radius=20,
+                            gradient=ft.LinearGradient(
+                                begin=ft.alignment.top_left,
+                                end=ft.alignment.bottom_right,
+                                colors=theme.COLORS["gradient_green"],
+                            ),
+                            shadow=ft.BoxShadow(
+                                spread_radius=0,
+                                blur_radius=20,
+                                color=ft.Colors.with_opacity(0.3, theme.COLORS["success"]),
+                                offset=ft.Offset(0, 8),
+                            ),
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "Limpieza del Sistema",
+                                    size=28,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=theme.COLORS["text"],
+                                ),
+                                ft.Text(
+                                    "Elimina archivos temporales y libera espacio en disco",
+                                    size=14,
+                                    color=theme.COLORS["text_secondary"],
+                                ),
+                            ],
+                            spacing=4,
+                        ),
+                    ],
+                    spacing=20,
+                ),
+                padding=ft.padding.symmetric(horizontal=30, vertical=24),
             ),
-            ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+
+            # Panel de espacio liberado
             ft.Container(
-                content=theme.crear_card(ft.Column(controls=[theme.crear_titulo("Opciones de Limpieza", 18), ft.Divider(height=12, color=ft.Colors.TRANSPARENT), *items_limpieza])),
-                padding=ft.padding.symmetric(horizontal=20),
+                content=ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text(
+                                "Espacio Liberado",
+                                size=14,
+                                color=theme.COLORS["text_muted"],
+                            ),
+                            total_liberado,
+                            ft.Container(height=16),
+                            progreso_bar,
+                            ft.Container(height=16),
+                            btn_limpiar,
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=8,
+                    ),
+                    padding=40,
+                    border_radius=theme.BORDER_RADIUS_LG,
+                    bgcolor=theme.COLORS["surface"],
+                    border=ft.border.all(1, theme.COLORS["border"]),
+                ),
+                padding=ft.padding.symmetric(horizontal=30),
             ),
-            ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+
+            ft.Container(height=24),
+
+            # Grid de opciones
             ft.Container(
-                content=theme.crear_card(ft.Column(controls=[theme.crear_titulo("Resultados", 18), ft.Divider(height=12, color=ft.Colors.TRANSPARENT), resultados_lista])),
-                padding=ft.padding.symmetric(horizontal=20),
-                expand=True,
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            "Opciones de Limpieza",
+                            size=18,
+                            weight=ft.FontWeight.BOLD,
+                            color=theme.COLORS["text"],
+                        ),
+                        ft.Container(height=16),
+                        ft.Row(
+                            controls=items_limpieza[:4],
+                            wrap=True,
+                            spacing=12,
+                            run_spacing=12,
+                        ),
+                        ft.Row(
+                            controls=items_limpieza[4:],
+                            wrap=True,
+                            spacing=12,
+                            run_spacing=12,
+                        ),
+                    ],
+                ),
+                padding=ft.padding.symmetric(horizontal=30),
             ),
+
+            ft.Container(height=24),
+
+            # Resultados
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            "Historial de Limpieza",
+                            size=18,
+                            weight=ft.FontWeight.BOLD,
+                            color=theme.COLORS["text"],
+                        ),
+                        ft.Container(height=12),
+                        ft.Container(
+                            content=resultados_lista,
+                            padding=16,
+                            border_radius=theme.BORDER_RADIUS,
+                            bgcolor=theme.COLORS["surface"],
+                            border=ft.border.all(1, theme.COLORS["border"]),
+                            height=200,
+                        ),
+                    ],
+                ),
+                padding=ft.padding.symmetric(horizontal=30),
+            ),
+
+            ft.Container(height=30),
         ],
         scroll=ft.ScrollMode.AUTO,
         expand=True,

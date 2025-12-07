@@ -1,4 +1,4 @@
-"""Página de gestión de drivers."""
+"""Página de gestión de drivers - Estilo CleanMyMac."""
 import flet as ft
 from src.ui import theme
 from src.modules.drivers import (
@@ -9,120 +9,132 @@ import threading
 
 
 def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
-    """Página para escanear y actualizar drivers del sistema."""
+    """Página para escanear y actualizar drivers del sistema con estilo CleanMyMac."""
 
     resultado_escaneo: ResultadoEscaneo = None
     categoria_actual = [None]  # None = todas
 
     # UI Elements
-    contenedor_drivers = ft.Column(spacing=8, scroll=ft.ScrollMode.AUTO, expand=True)
+    contenedor_drivers = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
     estado_texto = ft.Text("", size=14, visible=False)
     progreso_bar = ft.ProgressBar(
         value=0,
         color=theme.COLORS["primary"],
-        bgcolor=theme.COLORS["surface_light"],
+        bgcolor=theme.COLORS["surface_elevated"],
         height=8,
         border_radius=4,
         visible=False
     )
 
     # Stats cards
-    stat_total = ft.Text("--", size=28, weight=ft.FontWeight.BOLD, color=theme.COLORS["text"])
-    stat_ok = ft.Text("--", size=28, weight=ft.FontWeight.BOLD, color=theme.COLORS["success"])
-    stat_problemas = ft.Text("--", size=28, weight=ft.FontWeight.BOLD, color=theme.COLORS["warning"])
-    stat_faltantes = ft.Text("--", size=28, weight=ft.FontWeight.BOLD, color=theme.COLORS["error"])
+    stat_total = ft.Text("--", size=32, weight=ft.FontWeight.BOLD, color=theme.COLORS["text"])
+    stat_ok = ft.Text("--", size=32, weight=ft.FontWeight.BOLD, color=theme.COLORS["success"])
+    stat_problemas = ft.Text("--", size=32, weight=ft.FontWeight.BOLD, color=theme.COLORS["warning"])
+    stat_faltantes = ft.Text("--", size=32, weight=ft.FontWeight.BOLD, color=theme.COLORS["error"])
 
     btn_escanear = None
     btn_actualizar = None
 
-    def crear_stat_card(titulo: str, valor_widget: ft.Text, icono, color: str) -> ft.Container:
-        """Crea una tarjeta de estadística."""
+    def crear_stat_card(titulo: str, valor_widget: ft.Text, icono, color: str, gradiente: list) -> ft.Container:
+        """Crea una tarjeta de estadística con estilo CleanMyMac."""
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Container(
-                                content=ft.Icon(icono, size=20, color=color),
-                                padding=10,
-                                border_radius=10,
-                                bgcolor=ft.Colors.with_opacity(0.15, color),
-                            ),
-                        ],
+                    ft.Container(
+                        content=ft.Icon(icono, size=24, color=ft.Colors.WHITE),
+                        padding=14,
+                        border_radius=16,
+                        gradient=ft.LinearGradient(
+                            begin=ft.alignment.top_left,
+                            end=ft.alignment.bottom_right,
+                            colors=gradiente,
+                        ),
+                        shadow=ft.BoxShadow(
+                            spread_radius=0,
+                            blur_radius=12,
+                            color=ft.Colors.with_opacity(0.25, color),
+                            offset=ft.Offset(0, 4),
+                        ),
                     ),
-                    ft.Container(height=8),
+                    ft.Container(height=12),
                     valor_widget,
-                    ft.Text(titulo, size=12, color=theme.COLORS["text_secondary"]),
+                    ft.Text(titulo, size=12, color=theme.COLORS["text_muted"]),
                 ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=4,
             ),
-            padding=16,
+            padding=24,
             border_radius=theme.BORDER_RADIUS,
             bgcolor=theme.COLORS["surface"],
             border=ft.border.all(1, theme.COLORS["border"]),
-            width=150,
+            width=160,
         )
 
     def crear_driver_item(driver: DriverInfo) -> ft.Container:
-        """Crea un item de driver."""
+        """Crea un item de driver con estilo CleanMyMac."""
         # Color según estado
         if driver.estado == EstadoDriver.OK:
             color_estado = theme.COLORS["success"]
             icono_estado = ft.Icons.CHECK_CIRCLE_ROUNDED
+            texto_estado = "OK"
         elif driver.estado == EstadoDriver.FALTANTE:
             color_estado = theme.COLORS["error"]
             icono_estado = ft.Icons.ERROR_ROUNDED
+            texto_estado = "Faltante"
         elif driver.estado == EstadoDriver.PROBLEMA:
             color_estado = theme.COLORS["warning"]
             icono_estado = ft.Icons.WARNING_ROUNDED
+            texto_estado = "Problema"
         else:
             color_estado = theme.COLORS["text_muted"]
             icono_estado = ft.Icons.HELP_ROUNDED
+            texto_estado = "Desconocido"
 
         # Icono de categoría
         iconos_cat = {
-            CategoriaDriver.DISPLAY: ft.Icons.MONITOR_ROUNDED,
-            CategoriaDriver.NETWORK: ft.Icons.WIFI_ROUNDED,
-            CategoriaDriver.AUDIO: ft.Icons.VOLUME_UP_ROUNDED,
-            CategoriaDriver.USB: ft.Icons.USB_ROUNDED,
-            CategoriaDriver.STORAGE: ft.Icons.STORAGE_ROUNDED,
-            CategoriaDriver.BLUETOOTH: ft.Icons.BLUETOOTH_ROUNDED,
-            CategoriaDriver.INPUT: ft.Icons.KEYBOARD_ROUNDED,
-            CategoriaDriver.PRINTER: ft.Icons.PRINT_ROUNDED,
-            CategoriaDriver.SYSTEM: ft.Icons.SETTINGS_ROUNDED,
-            CategoriaDriver.OTHER: ft.Icons.DEVICES_OTHER_ROUNDED,
+            CategoriaDriver.DISPLAY: (ft.Icons.MONITOR_ROUNDED, theme.COLORS["accent_purple"]),
+            CategoriaDriver.NETWORK: (ft.Icons.WIFI_ROUNDED, theme.COLORS["accent_blue"]),
+            CategoriaDriver.AUDIO: (ft.Icons.VOLUME_UP_ROUNDED, theme.COLORS["accent_orange"]),
+            CategoriaDriver.USB: (ft.Icons.USB_ROUNDED, theme.COLORS["primary"]),
+            CategoriaDriver.STORAGE: (ft.Icons.STORAGE_ROUNDED, theme.COLORS["success"]),
+            CategoriaDriver.BLUETOOTH: (ft.Icons.BLUETOOTH_ROUNDED, theme.COLORS["info"]),
+            CategoriaDriver.INPUT: (ft.Icons.KEYBOARD_ROUNDED, theme.COLORS["accent_pink"]),
+            CategoriaDriver.PRINTER: (ft.Icons.PRINT_ROUNDED, theme.COLORS["warning"]),
+            CategoriaDriver.SYSTEM: (ft.Icons.SETTINGS_ROUNDED, theme.COLORS["text_secondary"]),
+            CategoriaDriver.OTHER: (ft.Icons.DEVICES_OTHER_ROUNDED, theme.COLORS["text_muted"]),
         }
+
+        icono_cat, color_cat = iconos_cat.get(driver.categoria, (ft.Icons.DEVICES_OTHER_ROUNDED, theme.COLORS["primary"]))
 
         return ft.Container(
             content=ft.Row(
                 controls=[
                     ft.Container(
-                        content=ft.Icon(
-                            iconos_cat.get(driver.categoria, ft.Icons.DEVICES_OTHER_ROUNDED),
-                            size=22,
-                            color=theme.COLORS["primary"]
-                        ),
-                        padding=10,
-                        border_radius=10,
-                        bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["primary"]),
+                        content=ft.Icon(icono_cat, size=22, color=color_cat),
+                        padding=12,
+                        border_radius=14,
+                        bgcolor=ft.Colors.with_opacity(0.1, color_cat),
                     ),
                     ft.Column(
                         controls=[
                             ft.Text(
                                 driver.nombre[:50] + "..." if len(driver.nombre) > 50 else driver.nombre,
                                 size=14,
-                                weight=ft.FontWeight.W_500,
+                                weight=ft.FontWeight.W_600,
                                 color=theme.COLORS["text"]
                             ),
                             ft.Row(
                                 controls=[
-                                    ft.Text(driver.fabricante, size=12, color=theme.COLORS["text_muted"]),
-                                    ft.Text("•", size=12, color=theme.COLORS["text_muted"]),
-                                    ft.Text(f"v{driver.version}", size=12, color=theme.COLORS["text_secondary"]),
-                                    ft.Text("•", size=12, color=theme.COLORS["text_muted"]),
-                                    ft.Text(driver.fecha, size=12, color=theme.COLORS["text_muted"]),
+                                    ft.Text(driver.fabricante, size=12, color=theme.COLORS["text_secondary"]),
+                                    ft.Container(
+                                        width=4,
+                                        height=4,
+                                        border_radius=2,
+                                        bgcolor=theme.COLORS["text_muted"],
+                                    ),
+                                    ft.Text(f"v{driver.version}", size=12, color=theme.COLORS["text_muted"]),
                                 ],
-                                spacing=6,
+                                spacing=8,
                             ),
                         ],
                         spacing=4,
@@ -131,21 +143,21 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                     ft.Container(
                         content=ft.Row(
                             controls=[
-                                ft.Icon(icono_estado, size=16, color=color_estado),
-                                ft.Text(driver.estado.value, size=12, color=color_estado),
+                                ft.Icon(icono_estado, size=16, color=ft.Colors.WHITE),
+                                ft.Text(texto_estado, size=11, weight=ft.FontWeight.W_500, color=ft.Colors.WHITE),
                             ],
-                            spacing=4,
+                            spacing=6,
                         ),
-                        padding=ft.padding.symmetric(horizontal=12, vertical=6),
-                        border_radius=20,
-                        bgcolor=ft.Colors.with_opacity(0.1, color_estado),
+                        padding=ft.padding.symmetric(horizontal=14, vertical=8),
+                        border_radius=16,
+                        bgcolor=color_estado,
                     ),
                 ],
                 spacing=16,
             ),
-            padding=16,
-            border_radius=theme.BORDER_RADIUS_SM,
-            bgcolor=theme.COLORS["surface_light"],
+            padding=18,
+            border_radius=theme.BORDER_RADIUS,
+            bgcolor=theme.COLORS["surface"],
             border=ft.border.all(1, theme.COLORS["border"]),
         )
 
@@ -158,17 +170,29 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            ft.Icon(ft.Icons.SEARCH_ROUNDED, size=48, color=theme.COLORS["text_muted"]),
+                            ft.Container(
+                                content=ft.Icon(ft.Icons.SEARCH_ROUNDED, size=48, color=theme.COLORS["primary"]),
+                                padding=20,
+                                border_radius=30,
+                                bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["primary"]),
+                            ),
+                            ft.Container(height=16),
+                            ft.Text(
+                                "Escanea tus drivers",
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=theme.COLORS["text"],
+                            ),
                             ft.Text(
                                 "Haz clic en 'Escanear Drivers' para comenzar",
                                 size=14,
-                                color=theme.COLORS["text_secondary"]
+                                color=theme.COLORS["text_secondary"],
                             ),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=12,
+                        spacing=8,
                     ),
-                    padding=40,
+                    padding=60,
                     alignment=ft.alignment.center,
                 )
             )
@@ -197,9 +221,8 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
         progreso_bar.visible = True
         progreso_bar.value = 0
         estado_texto.visible = True
-        estado_texto.value = "Iniciando escaneo..."
-        estado_texto.color = theme.COLORS["text_secondary"]
-        btn_escanear.disabled = True
+        estado_texto.value = "Iniciando escaneo de drivers..."
+        estado_texto.color = theme.COLORS["info"]
         if page:
             page.update()
 
@@ -230,7 +253,6 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                 estado_texto.color = theme.COLORS["error"]
 
             progreso_bar.visible = False
-            btn_escanear.disabled = False
             if page:
                 page.update()
 
@@ -239,12 +261,10 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
     def actualizar_click(e):
         """Actualiza todos los drivers."""
         progreso_bar.visible = True
-        progreso_bar.value = None  # Indeterminado
+        progreso_bar.value = None
         estado_texto.visible = True
-        estado_texto.value = "Buscando actualizaciones..."
-        estado_texto.color = theme.COLORS["text_secondary"]
-        btn_actualizar.disabled = True
-        btn_escanear.disabled = True
+        estado_texto.value = "Buscando actualizaciones de drivers..."
+        estado_texto.color = theme.COLORS["info"]
         if page:
             page.update()
 
@@ -265,8 +285,6 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                 estado_texto.color = theme.COLORS["error"]
 
             progreso_bar.visible = False
-            btn_actualizar.disabled = False
-            btn_escanear.disabled = False
             if page:
                 page.update()
 
@@ -279,35 +297,53 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
         if page:
             page.update()
 
-    # Botones principales
-    btn_escanear = ft.ElevatedButton(
-        text="Escanear Drivers",
-        icon=ft.Icons.SEARCH_ROUNDED,
+    # Botones principales con gradiente
+    btn_escanear = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.SEARCH_ROUNDED, size=20, color=ft.Colors.WHITE),
+                ft.Text("Escanear Drivers", size=14, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+            ],
+            spacing=10,
+        ),
+        padding=ft.padding.symmetric(horizontal=28, vertical=14),
+        border_radius=theme.BORDER_RADIUS_SM,
+        gradient=ft.LinearGradient(
+            colors=theme.COLORS["gradient_blue"],
+        ),
         on_click=escanear_click,
-        style=ft.ButtonStyle(
-            bgcolor=theme.COLORS["primary"],
-            color=ft.Colors.WHITE,
-            padding=ft.padding.symmetric(horizontal=24, vertical=14),
+        ink=True,
+        shadow=ft.BoxShadow(
+            spread_radius=0,
+            blur_radius=15,
+            color=ft.Colors.with_opacity(0.3, theme.COLORS["primary"]),
+            offset=ft.Offset(0, 5),
         ),
     )
 
-    btn_actualizar = ft.ElevatedButton(
-        text="Actualizar Todo",
-        icon=ft.Icons.SYSTEM_UPDATE_ROUNDED,
-        on_click=actualizar_click,
-        style=ft.ButtonStyle(
-            bgcolor=theme.COLORS["secondary"],
-            color=ft.Colors.WHITE,
-            padding=ft.padding.symmetric(horizontal=24, vertical=14),
+    btn_actualizar = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.SYSTEM_UPDATE_ROUNDED, size=20, color=ft.Colors.WHITE),
+                ft.Text("Actualizar Todo", size=14, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+            ],
+            spacing=10,
         ),
+        padding=ft.padding.symmetric(horizontal=28, vertical=14),
+        border_radius=theme.BORDER_RADIUS_SM,
+        gradient=ft.LinearGradient(
+            colors=theme.COLORS["gradient_green"],
+        ),
+        on_click=actualizar_click,
+        ink=True,
     )
 
     # Filtros de categoría
     filtros = ft.Row(
         controls=[
             ft.Container(
-                content=ft.Text("Todas", size=12, color=theme.COLORS["text"]),
-                padding=ft.padding.symmetric(horizontal=14, vertical=8),
+                content=ft.Text("Todas", size=12, weight=ft.FontWeight.W_500, color=ft.Colors.WHITE if not categoria_actual[0] else theme.COLORS["text_muted"]),
+                padding=ft.padding.symmetric(horizontal=16, vertical=8),
                 border_radius=20,
                 bgcolor=theme.COLORS["primary"] if not categoria_actual[0] else theme.COLORS["surface_light"],
                 on_click=lambda e: cambiar_categoria(None),
@@ -315,8 +351,8 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
             ),
         ] + [
             ft.Container(
-                content=ft.Text(cat.value, size=12, color=theme.COLORS["text_secondary"]),
-                padding=ft.padding.symmetric(horizontal=14, vertical=8),
+                content=ft.Text(cat.value, size=12, weight=ft.FontWeight.W_500, color=theme.COLORS["text_muted"]),
+                padding=ft.padding.symmetric(horizontal=16, vertical=8),
                 border_radius=20,
                 bgcolor=theme.COLORS["surface_light"],
                 on_click=lambda e, c=cat: cambiar_categoria(c),
@@ -325,8 +361,11 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
             for cat in [CategoriaDriver.DISPLAY, CategoriaDriver.NETWORK, CategoriaDriver.AUDIO, CategoriaDriver.STORAGE]
         ],
         wrap=True,
-        spacing=8,
+        spacing=10,
     )
+
+    # Inicializar lista vacía
+    actualizar_lista_drivers()
 
     # Layout principal
     return ft.Column(
@@ -336,18 +375,33 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                 content=ft.Row(
                     controls=[
                         ft.Container(
-                            content=ft.Icon(ft.Icons.MEMORY_ROUNDED, size=48, color=theme.COLORS["primary"]),
-                            padding=14,
-                            border_radius=16,
-                            bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["primary"]),
+                            content=ft.Icon(ft.Icons.DEVELOPER_BOARD_ROUNDED, size=40, color=ft.Colors.WHITE),
+                            padding=16,
+                            border_radius=20,
+                            gradient=ft.LinearGradient(
+                                begin=ft.alignment.top_left,
+                                end=ft.alignment.bottom_right,
+                                colors=theme.COLORS["gradient_purple"],
+                            ),
+                            shadow=ft.BoxShadow(
+                                spread_radius=0,
+                                blur_radius=20,
+                                color=ft.Colors.with_opacity(0.3, theme.COLORS["accent_purple"]),
+                                offset=ft.Offset(0, 8),
+                            ),
                         ),
                         ft.Column(
                             controls=[
-                                ft.Text("Gestión de Drivers", size=28, weight=ft.FontWeight.BOLD, color=theme.COLORS["text"]),
+                                ft.Text(
+                                    "Gestión de Drivers",
+                                    size=28,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=theme.COLORS["text"],
+                                ),
                                 ft.Text(
                                     "Escanea, detecta y actualiza los drivers de tu sistema",
                                     size=14,
-                                    color=theme.COLORS["text_secondary"]
+                                    color=theme.COLORS["text_secondary"],
                                 ),
                             ],
                             spacing=4,
@@ -355,54 +409,54 @@ def crear_pagina_drivers(page: ft.Page = None) -> ft.Column:
                     ],
                     spacing=20,
                 ),
-                padding=ft.padding.symmetric(horizontal=24, vertical=20),
+                padding=ft.padding.symmetric(horizontal=30, vertical=24),
             ),
 
             # Stats
             ft.Container(
                 content=ft.Row(
                     controls=[
-                        crear_stat_card("Total Drivers", stat_total, ft.Icons.DEVELOPER_BOARD_ROUNDED, theme.COLORS["primary"]),
-                        crear_stat_card("Actualizados", stat_ok, ft.Icons.CHECK_CIRCLE_ROUNDED, theme.COLORS["success"]),
-                        crear_stat_card("Con Problemas", stat_problemas, ft.Icons.WARNING_ROUNDED, theme.COLORS["warning"]),
-                        crear_stat_card("Faltantes", stat_faltantes, ft.Icons.ERROR_ROUNDED, theme.COLORS["error"]),
+                        crear_stat_card("Total", stat_total, ft.Icons.DEVELOPER_BOARD_ROUNDED, theme.COLORS["primary"], theme.COLORS["gradient_blue"]),
+                        crear_stat_card("Actualizados", stat_ok, ft.Icons.CHECK_CIRCLE_ROUNDED, theme.COLORS["success"], theme.COLORS["gradient_green"]),
+                        crear_stat_card("Problemas", stat_problemas, ft.Icons.WARNING_ROUNDED, theme.COLORS["warning"], theme.COLORS["gradient_orange"]),
+                        crear_stat_card("Faltantes", stat_faltantes, ft.Icons.ERROR_ROUNDED, theme.COLORS["error"], ["#f5576c", "#f093fb"]),
                     ],
                     spacing=16,
                     wrap=True,
                 ),
-                padding=ft.padding.symmetric(horizontal=24),
+                padding=ft.padding.symmetric(horizontal=30),
             ),
 
-            ft.Container(height=16),
+            ft.Container(height=20),
 
             # Botones de acción
             ft.Container(
                 content=ft.Row(
                     controls=[btn_escanear, btn_actualizar],
-                    spacing=12,
+                    spacing=16,
                 ),
-                padding=ft.padding.symmetric(horizontal=24),
+                padding=ft.padding.symmetric(horizontal=30),
             ),
 
-            ft.Container(height=8),
+            ft.Container(height=12),
 
             # Progreso y estado
             ft.Container(
                 content=ft.Column(controls=[progreso_bar, estado_texto], spacing=8),
-                padding=ft.padding.symmetric(horizontal=24),
+                padding=ft.padding.symmetric(horizontal=30),
             ),
 
             ft.Container(height=16),
 
             # Filtros
-            ft.Container(content=filtros, padding=ft.padding.symmetric(horizontal=24)),
+            ft.Container(content=filtros, padding=ft.padding.symmetric(horizontal=30)),
 
-            ft.Container(height=12),
+            ft.Container(height=16),
 
             # Lista de drivers
             ft.Container(
                 content=contenedor_drivers,
-                padding=ft.padding.symmetric(horizontal=24),
+                padding=ft.padding.symmetric(horizontal=30),
                 expand=True,
             ),
 
