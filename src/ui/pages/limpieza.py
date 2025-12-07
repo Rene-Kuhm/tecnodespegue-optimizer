@@ -112,11 +112,11 @@ def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
 
     # Opciones de limpieza con iconos mejorados
     opciones = [
-        ("Archivos Temporales", ft.Icons.FOLDER_DELETE_ROUNDED, limpiar_temp_usuario, theme.COLORS["accent_blue"]),
-        ("Caché de Windows", ft.Icons.CACHED_ROUNDED, limpiar_temp_windows, theme.COLORS["accent_purple"]),
-        ("Prefetch", ft.Icons.SPEED_ROUNDED, limpiar_prefetch, theme.COLORS["accent_orange"]),
+        ("Archivos Temporales", ft.Icons.FOLDER_DELETE_ROUNDED, limpiar_temp_usuario, theme.COLORS["scan_blue"]),
+        ("Caché de Windows", ft.Icons.CACHED_ROUNDED, limpiar_temp_windows, theme.COLORS["scan_purple"]),
+        ("Prefetch", ft.Icons.SPEED_ROUNDED, limpiar_prefetch, theme.COLORS["speed_orange"]),
         ("Windows Update", ft.Icons.UPDATE_ROUNDED, limpiar_cache_windows_update, theme.COLORS["primary"]),
-        ("Miniaturas", ft.Icons.IMAGE_ROUNDED, limpiar_thumbnails, theme.COLORS["accent_pink"]),
+        ("Miniaturas", ft.Icons.IMAGE_ROUNDED, limpiar_thumbnails, theme.COLORS["protect_red"]),
         ("Logs del Sistema", ft.Icons.DESCRIPTION_ROUNDED, limpiar_logs_windows, theme.COLORS["info"]),
         ("Papelera", ft.Icons.DELETE_SWEEP_ROUNDED, limpiar_papelera, theme.COLORS["error"]),
     ]
@@ -172,7 +172,7 @@ def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
         gradient=ft.LinearGradient(
             begin=ft.alignment.center_left,
             end=ft.alignment.center_right,
-            colors=theme.COLORS["gradient_green"],
+            colors=theme.COLORS["gradient_clean"],
         ),
         on_click=limpiar_todo,
         ink=True,
@@ -197,7 +197,7 @@ def crear_pagina_limpieza(page: ft.Page = None) -> ft.Column:
                             gradient=ft.LinearGradient(
                                 begin=ft.alignment.top_left,
                                 end=ft.alignment.bottom_right,
-                                colors=theme.COLORS["gradient_green"],
+                                colors=theme.COLORS["gradient_clean"],
                             ),
                             shadow=ft.BoxShadow(
                                 spread_radius=0,

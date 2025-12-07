@@ -1,227 +1,330 @@
-"""Tema estilo CleanMyMac - Diseño minimalista y elegante."""
+"""Tema estilo CleanMyMac X - Diseño premium minimalista con efectos glass."""
 import flet as ft
 
-# Paleta de colores estilo CleanMyMac
+# Paleta de colores estilo CleanMyMac X
 COLORS = {
-    # Fondo principal - degradado oscuro
-    "background": "#1a1a2e",
-    "background_dark": "#16162a",
-    "background_gradient_start": "#1a1a2e",
-    "background_gradient_end": "#0f0f1a",
+    # Fondo principal - negro profundo con tintes azules
+    "background": "#0c0c14",
+    "background_secondary": "#12121c",
+    "background_elevated": "#1a1a28",
 
-    # Sidebar
-    "sidebar": "#0d0d1a",
-    "sidebar_hover": "#252540",
-    "sidebar_active": "#2d2d4a",
+    # Sidebar - prácticamente negro con transparencia
+    "sidebar": "#08080e",
+    "sidebar_hover": "#1a1a2a",
+    "sidebar_active": "#252538",
 
-    # Superficies
-    "surface": "#252542",
-    "surface_light": "#2d2d4f",
-    "surface_elevated": "#353560",
+    # Superficies con efecto glass
+    "surface": "#16161f",
+    "surface_light": "#1e1e2a",
+    "surface_elevated": "#262635",
+    "surface_glass": "#ffffff08",
 
-    # Colores de acento - Gradientes llamativos
-    "primary": "#667eea",
-    "primary_light": "#7c94f4",
-    "primary_dark": "#5a67d8",
+    # Colores de acento - Gradientes vibrantes estilo CleanMyMac
+    "primary": "#6c5ce7",
+    "primary_light": "#a29bfe",
+    "primary_dark": "#5541d8",
 
-    "accent_blue": "#4facfe",
-    "accent_purple": "#667eea",
-    "accent_pink": "#f093fb",
-    "accent_orange": "#f5576c",
-    "accent_green": "#4facfe",
-    "accent_yellow": "#ffecd2",
+    # Colores de funciones (estilo CleanMyMac)
+    "scan_blue": "#00cec9",
+    "scan_purple": "#6c5ce7",
+    "clean_green": "#00b894",
+    "protect_red": "#fd79a8",
+    "speed_orange": "#fdcb6e",
+    "apps_cyan": "#74b9ff",
 
-    # Gradientes para botones grandes
-    "gradient_blue": ["#667eea", "#764ba2"],
-    "gradient_green": ["#11998e", "#38ef7d"],
-    "gradient_orange": ["#f5576c", "#f093fb"],
-    "gradient_purple": ["#667eea", "#f093fb"],
-    "gradient_cyan": ["#4facfe", "#00f2fe"],
+    # Gradientes principales
+    "gradient_scan": ["#00cec9", "#6c5ce7"],
+    "gradient_clean": ["#00b894", "#55efc4"],
+    "gradient_protect": ["#fd79a8", "#e84393"],
+    "gradient_speed": ["#fdcb6e", "#f39c12"],
+    "gradient_primary": ["#6c5ce7", "#a29bfe"],
+    "gradient_accent": ["#00cec9", "#00b894"],
+    "gradient_purple_pink": ["#6c5ce7", "#fd79a8"],
 
     # Texto
     "text": "#ffffff",
-    "text_secondary": "#a0a0b8",
-    "text_muted": "#6b6b80",
-    "text_dark": "#1a1a2e",
+    "text_secondary": "#b2b2c2",
+    "text_muted": "#636380",
+    "text_disabled": "#404050",
 
     # Estados
-    "success": "#38ef7d",
-    "warning": "#ffc107",
-    "error": "#f5576c",
-    "info": "#4facfe",
+    "success": "#00b894",
+    "warning": "#fdcb6e",
+    "error": "#ff7675",
+    "info": "#74b9ff",
 
-    # Bordes
-    "border": "#3d3d5c",
-    "border_light": "#4d4d6a",
+    # Bordes sutiles
+    "border": "#2a2a3a",
+    "border_light": "#3a3a4a",
+    "border_glow": "#6c5ce720",
 }
 
-# Radios de borde
-BORDER_RADIUS = 20
-BORDER_RADIUS_SM = 12
-BORDER_RADIUS_LG = 28
-BORDER_RADIUS_XL = 36
+# Radios de borde más suaves
+BORDER_RADIUS = 16
+BORDER_RADIUS_SM = 10
+BORDER_RADIUS_LG = 24
+BORDER_RADIUS_XL = 32
+BORDER_RADIUS_FULL = 100
 
-# Sombras suaves
-SHADOW = ft.BoxShadow(
+# Espaciado consistente
+SPACING = {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48,
+}
+
+# Sombras premium
+SHADOW_SM = ft.BoxShadow(
     spread_radius=0,
-    blur_radius=30,
+    blur_radius=10,
+    color=ft.Colors.with_opacity(0.2, "#000000"),
+    offset=ft.Offset(0, 4)
+)
+
+SHADOW_MD = ft.BoxShadow(
+    spread_radius=0,
+    blur_radius=20,
+    color=ft.Colors.with_opacity(0.25, "#000000"),
+    offset=ft.Offset(0, 8)
+)
+
+SHADOW_LG = ft.BoxShadow(
+    spread_radius=0,
+    blur_radius=40,
     color=ft.Colors.with_opacity(0.3, "#000000"),
-    offset=ft.Offset(0, 10)
+    offset=ft.Offset(0, 16)
 )
 
 SHADOW_GLOW = ft.BoxShadow(
-    spread_radius=4,
+    spread_radius=2,
     blur_radius=20,
-    color=ft.Colors.with_opacity(0.4, COLORS["primary"]),
+    color=ft.Colors.with_opacity(0.35, COLORS["primary"]),
+    offset=ft.Offset(0, 0)
+)
+
+SHADOW_GLOW_CYAN = ft.BoxShadow(
+    spread_radius=2,
+    blur_radius=25,
+    color=ft.Colors.with_opacity(0.4, COLORS["scan_blue"]),
     offset=ft.Offset(0, 0)
 )
 
 
-def crear_boton_grande(
-    texto: str,
-    subtexto: str = None,
-    icono=None,
-    gradiente: list = None,
-    on_click=None,
-    width: int = 280,
-    height: int = 180
+def crear_glass_container(
+    content: ft.Control,
+    padding: int = 20,
+    border_radius: int = BORDER_RADIUS,
+    blur: int = 10,
 ) -> ft.Container:
-    """Crea un botón grande estilo CleanMyMac."""
-    if gradiente is None:
-        gradiente = COLORS["gradient_blue"]
-
-    contenido = ft.Column(
-        controls=[
-            ft.Container(
-                content=ft.Icon(icono, size=48, color=ft.Colors.WHITE) if icono else None,
-                padding=16,
-            ),
-            ft.Text(
-                texto,
-                size=18,
-                weight=ft.FontWeight.BOLD,
-                color=ft.Colors.WHITE,
-                text_align=ft.TextAlign.CENTER,
-            ),
-            ft.Text(
-                subtexto,
-                size=12,
-                color=ft.Colors.with_opacity(0.8, ft.Colors.WHITE),
-                text_align=ft.TextAlign.CENTER,
-            ) if subtexto else ft.Container(),
-        ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=8,
-    )
-
-    return ft.Container(
-        content=contenido,
-        width=width,
-        height=height,
-        border_radius=BORDER_RADIUS_LG,
-        gradient=ft.LinearGradient(
-            begin=ft.alignment.top_left,
-            end=ft.alignment.bottom_right,
-            colors=gradiente,
-        ),
-        shadow=SHADOW,
-        on_click=on_click,
-        ink=True,
-        animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
-    )
-
-
-def crear_boton_circular(
-    icono,
-    texto: str,
-    color: str = None,
-    on_click=None,
-    size: int = 120
-) -> ft.Container:
-    """Crea un botón circular grande estilo CleanMyMac."""
-    if color is None:
-        color = COLORS["primary"]
-
-    return ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Container(
-                    content=ft.Icon(icono, size=36, color=ft.Colors.WHITE),
-                    width=70,
-                    height=70,
-                    border_radius=35,
-                    gradient=ft.LinearGradient(
-                        begin=ft.alignment.top_left,
-                        end=ft.alignment.bottom_right,
-                        colors=[color, ft.Colors.with_opacity(0.7, color)],
-                    ),
-                    shadow=ft.BoxShadow(
-                        spread_radius=0,
-                        blur_radius=15,
-                        color=ft.Colors.with_opacity(0.4, color),
-                        offset=ft.Offset(0, 5)
-                    ),
-                ),
-                ft.Container(height=8),
-                ft.Text(
-                    texto,
-                    size=13,
-                    weight=ft.FontWeight.W_500,
-                    color=COLORS["text"],
-                    text_align=ft.TextAlign.CENTER,
-                ),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=4,
-        ),
-        width=size,
-        on_click=on_click,
-        ink=True,
-        padding=10,
-        border_radius=BORDER_RADIUS,
-    )
-
-
-def crear_card(content: ft.Control, padding: int = 24) -> ft.Container:
-    """Crea una tarjeta con estilo CleanMyMac."""
+    """Crea un contenedor con efecto glass/blur."""
     return ft.Container(
         content=content,
         padding=padding,
-        border_radius=BORDER_RADIUS,
-        bgcolor=COLORS["surface"],
-        border=ft.border.all(1, COLORS["border"]),
+        border_radius=border_radius,
+        bgcolor=COLORS["surface_glass"],
+        border=ft.border.all(1, ft.Colors.with_opacity(0.1, "#ffffff")),
+        blur=blur,
     )
 
 
-def crear_card_stat(
+def crear_boton_escaneo_grande(
+    on_click=None,
+    scanning: bool = False,
+    progress: float = 0,
+) -> ft.Container:
+    """Crea el botón de escaneo principal estilo CleanMyMac."""
+    size = 220
+    inner_size = 180
+
+    # Contenido interior
+    if scanning:
+        inner_content = ft.Column(
+            controls=[
+                ft.ProgressRing(
+                    width=60,
+                    height=60,
+                    stroke_width=4,
+                    color=ft.Colors.WHITE,
+                ),
+                ft.Container(height=12),
+                ft.Text(
+                    f"{int(progress)}%",
+                    size=24,
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.WHITE,
+                ),
+                ft.Text(
+                    "Escaneando...",
+                    size=13,
+                    color=ft.Colors.with_opacity(0.8, ft.Colors.WHITE),
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=0,
+        )
+    else:
+        inner_content = ft.Column(
+            controls=[
+                ft.Icon(
+                    ft.Icons.PLAY_ARROW_ROUNDED,
+                    size=56,
+                    color=ft.Colors.WHITE,
+                ),
+                ft.Container(height=8),
+                ft.Text(
+                    "Escanear",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.WHITE,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=0,
+        )
+
+    return ft.Container(
+        content=ft.Stack(
+            controls=[
+                # Anillo exterior con glow
+                ft.Container(
+                    width=size,
+                    height=size,
+                    border_radius=size // 2,
+                    border=ft.border.all(2, ft.Colors.with_opacity(0.3, COLORS["scan_blue"])),
+                    shadow=SHADOW_GLOW_CYAN,
+                ),
+                # Círculo interior con gradiente
+                ft.Container(
+                    content=inner_content,
+                    width=inner_size,
+                    height=inner_size,
+                    border_radius=inner_size // 2,
+                    gradient=ft.LinearGradient(
+                        begin=ft.alignment.top_center,
+                        end=ft.alignment.bottom_center,
+                        colors=COLORS["gradient_scan"],
+                    ),
+                    shadow=SHADOW_LG,
+                    alignment=ft.alignment.center,
+                    left=(size - inner_size) // 2,
+                    top=(size - inner_size) // 2,
+                ),
+            ],
+        ),
+        width=size,
+        height=size,
+        on_click=on_click,
+    )
+
+
+def crear_modulo_card(
+    icono,
+    titulo: str,
+    descripcion: str,
+    color: str,
+    valor: str = None,
+    on_click=None,
+) -> ft.Container:
+    """Crea una tarjeta de módulo estilo CleanMyMac."""
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Container(
+                            content=ft.Icon(icono, size=24, color=color),
+                            width=48,
+                            height=48,
+                            border_radius=14,
+                            bgcolor=ft.Colors.with_opacity(0.15, color),
+                            alignment=ft.alignment.center,
+                        ),
+                        ft.Container(expand=True),
+                        ft.Text(
+                            valor,
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=color,
+                        ) if valor else ft.Container(),
+                    ],
+                ),
+                ft.Container(height=16),
+                ft.Text(
+                    titulo,
+                    size=16,
+                    weight=ft.FontWeight.W_600,
+                    color=COLORS["text"],
+                ),
+                ft.Text(
+                    descripcion,
+                    size=13,
+                    color=COLORS["text_muted"],
+                ),
+            ],
+            spacing=4,
+        ),
+        padding=20,
+        border_radius=BORDER_RADIUS,
+        bgcolor=COLORS["surface"],
+        border=ft.border.all(1, COLORS["border"]),
+        on_click=on_click,
+        ink=True if on_click else False,
+        animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
+    )
+
+
+def crear_stat_card(
     valor: str,
     titulo: str,
     icono=None,
-    color: str = None
+    color: str = None,
+    tendencia: str = None,
 ) -> ft.Container:
     """Crea una tarjeta de estadística compacta."""
     if color is None:
         color = COLORS["primary"]
 
     return ft.Container(
-        content=ft.Row(
+        content=ft.Column(
             controls=[
-                ft.Container(
-                    content=ft.Icon(icono, size=24, color=color) if icono else None,
-                    padding=12,
-                    border_radius=12,
-                    bgcolor=ft.Colors.with_opacity(0.15, color),
-                ) if icono else ft.Container(),
-                ft.Column(
+                ft.Row(
                     controls=[
-                        ft.Text(valor, size=24, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                        ft.Text(titulo, size=12, color=COLORS["text_secondary"]),
+                        ft.Container(
+                            content=ft.Icon(icono, size=20, color=color),
+                            width=40,
+                            height=40,
+                            border_radius=12,
+                            bgcolor=ft.Colors.with_opacity(0.12, color),
+                            alignment=ft.alignment.center,
+                        ) if icono else ft.Container(),
+                        ft.Container(expand=True),
+                        ft.Container(
+                            content=ft.Text(tendencia, size=11, color=COLORS["success"]),
+                            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                            border_radius=8,
+                            bgcolor=ft.Colors.with_opacity(0.15, COLORS["success"]),
+                        ) if tendencia else ft.Container(),
                     ],
-                    spacing=2,
+                ),
+                ft.Container(height=12),
+                ft.Text(
+                    valor,
+                    size=28,
+                    weight=ft.FontWeight.BOLD,
+                    color=COLORS["text"],
+                ),
+                ft.Text(
+                    titulo,
+                    size=12,
+                    color=COLORS["text_muted"],
                 ),
             ],
-            spacing=16,
+            spacing=2,
         ),
         padding=20,
         border_radius=BORDER_RADIUS,
@@ -236,7 +339,8 @@ def crear_item_lista(
     icono=None,
     trailing=None,
     color: str = None,
-    on_click=None
+    on_click=None,
+    seleccionado: bool = False,
 ) -> ft.Container:
     """Crea un item de lista estilo CleanMyMac."""
     if color is None:
@@ -246,15 +350,26 @@ def crear_item_lista(
         content=ft.Row(
             controls=[
                 ft.Container(
-                    content=ft.Icon(icono, size=22, color=color) if icono else None,
-                    padding=10,
-                    border_radius=10,
+                    content=ft.Icon(icono, size=20, color=color),
+                    width=40,
+                    height=40,
+                    border_radius=12,
                     bgcolor=ft.Colors.with_opacity(0.12, color),
+                    alignment=ft.alignment.center,
                 ) if icono else ft.Container(),
                 ft.Column(
                     controls=[
-                        ft.Text(titulo, size=14, weight=ft.FontWeight.W_500, color=COLORS["text"]),
-                        ft.Text(subtitulo, size=12, color=COLORS["text_muted"]) if subtitulo else ft.Container(),
+                        ft.Text(
+                            titulo,
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=COLORS["text"],
+                        ),
+                        ft.Text(
+                            subtitulo,
+                            size=12,
+                            color=COLORS["text_muted"],
+                        ) if subtitulo else ft.Container(),
                     ],
                     spacing=2,
                     expand=True,
@@ -262,10 +377,12 @@ def crear_item_lista(
                 trailing if trailing else ft.Container(),
             ],
             spacing=14,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        padding=ft.padding.symmetric(horizontal=16, vertical=14),
+        padding=ft.padding.symmetric(horizontal=16, vertical=12),
         border_radius=BORDER_RADIUS_SM,
-        bgcolor=COLORS["surface_light"],
+        bgcolor=COLORS["surface_elevated"] if seleccionado else COLORS["surface"],
+        border=ft.border.all(1, COLORS["primary"] if seleccionado else COLORS["border"]),
         on_click=on_click,
         ink=True if on_click else False,
     )
@@ -273,11 +390,12 @@ def crear_item_lista(
 
 def crear_progreso_circular(
     valor: float,
-    texto: str,
+    texto: str = None,
     color: str = None,
-    size: int = 150
+    size: int = 120,
+    stroke: int = 8,
 ) -> ft.Container:
-    """Crea un indicador de progreso circular grande estilo CleanMyMac."""
+    """Crea un indicador de progreso circular."""
     if color is None:
         color = COLORS["primary"]
 
@@ -286,10 +404,10 @@ def crear_progreso_circular(
             controls=[
                 ft.Container(
                     content=ft.ProgressRing(
-                        value=valor / 100,
-                        stroke_width=8,
+                        value=valor / 100 if valor else None,
+                        stroke_width=stroke,
                         color=color,
-                        bgcolor=COLORS["surface_light"],
+                        bgcolor=ft.Colors.with_opacity(0.1, color),
                     ),
                     width=size,
                     height=size,
@@ -298,18 +416,20 @@ def crear_progreso_circular(
                     content=ft.Column(
                         controls=[
                             ft.Text(
-                                f"{valor:.0f}%",
-                                size=32,
+                                f"{valor:.0f}%" if valor else "...",
+                                size=size // 4,
                                 weight=ft.FontWeight.BOLD,
                                 color=COLORS["text"],
                             ),
                             ft.Text(
                                 texto,
-                                size=12,
-                                color=COLORS["text_secondary"],
-                            ),
+                                size=11,
+                                color=COLORS["text_muted"],
+                                text_align=ft.TextAlign.CENTER,
+                            ) if texto else ft.Container(),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER,
                         spacing=4,
                     ),
                     width=size,
@@ -321,64 +441,153 @@ def crear_progreso_circular(
     )
 
 
-def crear_boton_scan(on_click=None, scanning: bool = False) -> ft.Container:
-    """Crea el botón de escaneo principal estilo CleanMyMac."""
+def crear_boton_primario(
+    texto: str,
+    on_click=None,
+    icono=None,
+    disabled: bool = False,
+    gradient: list = None,
+    expand: bool = False,
+) -> ft.Container:
+    """Crea un botón primario con gradiente."""
+    if gradient is None:
+        gradient = COLORS["gradient_primary"]
+
     return ft.Container(
-        content=ft.Stack(
+        content=ft.Row(
             controls=[
-                # Anillo exterior animado
-                ft.Container(
-                    width=200,
-                    height=200,
-                    border_radius=100,
-                    border=ft.border.all(3, COLORS["primary"]) if not scanning else None,
-                    animate=ft.Animation(1000, ft.AnimationCurve.EASE_IN_OUT),
-                ),
-                # Círculo interior con gradiente
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Icon(
-                                ft.Icons.PLAY_ARROW_ROUNDED if not scanning else ft.Icons.STOP_ROUNDED,
-                                size=64,
-                                color=ft.Colors.WHITE
-                            ),
-                            ft.Text(
-                                "ESCANEAR" if not scanning else "DETENER",
-                                size=16,
-                                weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.WHITE,
-                            ),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=8,
-                    ),
-                    width=180,
-                    height=180,
-                    border_radius=90,
-                    gradient=ft.LinearGradient(
-                        begin=ft.alignment.top_center,
-                        end=ft.alignment.bottom_center,
-                        colors=COLORS["gradient_blue"],
-                    ),
-                    shadow=ft.BoxShadow(
-                        spread_radius=0,
-                        blur_radius=30,
-                        color=ft.Colors.with_opacity(0.5, COLORS["primary"]),
-                        offset=ft.Offset(0, 10)
-                    ),
-                    alignment=ft.alignment.center,
-                    left=10,
-                    top=10,
+                ft.Icon(icono, size=18, color=ft.Colors.WHITE) if icono else ft.Container(),
+                ft.Text(
+                    texto,
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.WHITE if not disabled else COLORS["text_muted"],
                 ),
             ],
+            spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER,
         ),
-        width=200,
-        height=200,
+        padding=ft.padding.symmetric(horizontal=24, vertical=12),
+        border_radius=BORDER_RADIUS_SM,
+        gradient=ft.LinearGradient(
+            begin=ft.alignment.center_left,
+            end=ft.alignment.center_right,
+            colors=gradient,
+        ) if not disabled else None,
+        bgcolor=COLORS["surface_elevated"] if disabled else None,
+        on_click=on_click if not disabled else None,
+        ink=True if not disabled else False,
+        opacity=0.5 if disabled else 1,
+        expand=expand,
+        shadow=SHADOW_SM if not disabled else None,
+    )
+
+
+def crear_boton_secundario(
+    texto: str,
+    on_click=None,
+    icono=None,
+    color: str = None,
+) -> ft.Container:
+    """Crea un botón secundario con borde."""
+    if color is None:
+        color = COLORS["text_secondary"]
+
+    return ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(icono, size=18, color=color) if icono else ft.Container(),
+                ft.Text(texto, size=14, weight=ft.FontWeight.W_500, color=color),
+            ],
+            spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        padding=ft.padding.symmetric(horizontal=24, vertical=12),
+        border_radius=BORDER_RADIUS_SM,
+        border=ft.border.all(1.5, COLORS["border"]),
         on_click=on_click,
         ink=True,
-        ink_color=ft.Colors.with_opacity(0.2, ft.Colors.WHITE),
+    )
+
+
+def crear_chip(
+    texto: str,
+    color: str = None,
+    icono=None,
+    on_click=None,
+) -> ft.Container:
+    """Crea un chip/badge."""
+    if color is None:
+        color = COLORS["primary"]
+
+    return ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(icono, size=14, color=color) if icono else ft.Container(),
+                ft.Text(texto, size=12, weight=ft.FontWeight.W_500, color=color),
+            ],
+            spacing=6,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        padding=ft.padding.symmetric(horizontal=12, vertical=6),
+        border_radius=BORDER_RADIUS_FULL,
+        bgcolor=ft.Colors.with_opacity(0.12, color),
+        on_click=on_click,
+        ink=True if on_click else False,
+    )
+
+
+def crear_switch_item(
+    titulo: str,
+    descripcion: str = None,
+    valor: bool = False,
+    on_change=None,
+    data=None,
+    color: str = None,
+) -> ft.Container:
+    """Crea un item con switch."""
+    if color is None:
+        color = COLORS["primary"]
+
+    switch = ft.Switch(
+        value=valor,
+        on_change=on_change,
+        active_color=color,
+        active_track_color=ft.Colors.with_opacity(0.4, color),
+        inactive_thumb_color=COLORS["text_muted"],
+        inactive_track_color=COLORS["surface_elevated"],
+        data=data,
+    )
+
+    return ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Column(
+                    controls=[
+                        ft.Text(
+                            titulo,
+                            size=14,
+                            weight=ft.FontWeight.W_500,
+                            color=COLORS["text"],
+                        ),
+                        ft.Text(
+                            descripcion,
+                            size=12,
+                            color=COLORS["text_muted"],
+                        ) if descripcion else ft.Container(),
+                    ],
+                    spacing=4,
+                    expand=True,
+                ),
+                switch,
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        padding=ft.padding.symmetric(horizontal=16, vertical=14),
+        border_radius=BORDER_RADIUS_SM,
+        bgcolor=COLORS["surface"],
+        border=ft.border.all(1, COLORS["border"]),
     )
 
 
@@ -401,15 +610,28 @@ def crear_subtitulo(texto: str) -> ft.Text:
     )
 
 
-def crear_seccion_header(titulo: str, subtitulo: str = None, accion=None) -> ft.Container:
+def crear_seccion_header(
+    titulo: str,
+    subtitulo: str = None,
+    accion=None,
+) -> ft.Container:
     """Crea un header de sección."""
     return ft.Container(
         content=ft.Row(
             controls=[
                 ft.Column(
                     controls=[
-                        ft.Text(titulo, size=22, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                        ft.Text(subtitulo, size=13, color=COLORS["text_secondary"]) if subtitulo else ft.Container(),
+                        ft.Text(
+                            titulo,
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=COLORS["text"],
+                        ),
+                        ft.Text(
+                            subtitulo,
+                            size=13,
+                            color=COLORS["text_muted"],
+                        ) if subtitulo else ft.Container(),
                     ],
                     spacing=4,
                     expand=True,
@@ -417,117 +639,90 @@ def crear_seccion_header(titulo: str, subtitulo: str = None, accion=None) -> ft.
                 accion if accion else ft.Container(),
             ],
         ),
-        padding=ft.padding.only(bottom=20),
+        padding=ft.padding.only(bottom=16),
     )
 
 
-def crear_sidebar_item(icono, texto: str, activo: bool = False, on_click=None) -> ft.Container:
-    """Crea un item de sidebar estilo CleanMyMac."""
-    color = COLORS["primary"] if activo else COLORS["text_muted"]
+def crear_divider() -> ft.Container:
+    """Crea un divisor sutil."""
+    return ft.Container(
+        height=1,
+        bgcolor=COLORS["border"],
+        margin=ft.margin.symmetric(vertical=8),
+    )
+
+
+def crear_empty_state(
+    icono,
+    titulo: str,
+    descripcion: str,
+    color: str = None,
+) -> ft.Container:
+    """Crea un estado vacío."""
+    if color is None:
+        color = COLORS["success"]
+
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Icon(icono, size=48, color=color),
+                    width=100,
+                    height=100,
+                    border_radius=50,
+                    bgcolor=ft.Colors.with_opacity(0.1, color),
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(height=20),
+                ft.Text(
+                    titulo,
+                    size=20,
+                    weight=ft.FontWeight.BOLD,
+                    color=COLORS["text"],
+                    text_align=ft.TextAlign.CENTER,
+                ),
+                ft.Text(
+                    descripcion,
+                    size=14,
+                    color=COLORS["text_muted"],
+                    text_align=ft.TextAlign.CENTER,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=8,
+        ),
+        padding=40,
+        alignment=ft.alignment.center,
+    )
+
+
+def crear_badge_estado(
+    texto: str,
+    tipo: str = "info",
+) -> ft.Container:
+    """Crea un badge de estado."""
+    colores = {
+        "success": COLORS["success"],
+        "warning": COLORS["warning"],
+        "error": COLORS["error"],
+        "info": COLORS["info"],
+    }
+    color = colores.get(tipo, COLORS["info"])
 
     return ft.Container(
         content=ft.Row(
             controls=[
                 ft.Container(
-                    content=ft.Icon(icono, size=22, color=color),
-                    padding=10,
-                    border_radius=10,
-                    bgcolor=ft.Colors.with_opacity(0.15, COLORS["primary"]) if activo else None,
+                    width=6,
+                    height=6,
+                    border_radius=3,
+                    bgcolor=color,
                 ),
-                ft.Text(
-                    texto,
-                    size=14,
-                    weight=ft.FontWeight.W_600 if activo else ft.FontWeight.W_400,
-                    color=COLORS["text"] if activo else COLORS["text_muted"],
-                ),
+                ft.Text(texto, size=11, weight=ft.FontWeight.W_500, color=color),
             ],
-            spacing=12,
+            spacing=6,
         ),
-        padding=ft.padding.symmetric(horizontal=16, vertical=12),
-        border_radius=BORDER_RADIUS_SM,
-        bgcolor=COLORS["sidebar_active"] if activo else None,
-        on_click=on_click,
-        ink=True,
-        animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
-    )
-
-
-def crear_boton_primario(texto: str, on_click=None, icono=None, disabled: bool = False) -> ft.Container:
-    """Crea un botón primario con gradiente."""
-    return ft.Container(
-        content=ft.Row(
-            controls=[
-                ft.Icon(icono, size=20, color=ft.Colors.WHITE) if icono else ft.Container(),
-                ft.Text(texto, size=14, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
-            ],
-            spacing=8,
-            alignment=ft.MainAxisAlignment.CENTER,
-        ),
-        padding=ft.padding.symmetric(horizontal=28, vertical=14),
-        border_radius=BORDER_RADIUS_SM,
-        gradient=ft.LinearGradient(
-            begin=ft.alignment.center_left,
-            end=ft.alignment.center_right,
-            colors=COLORS["gradient_blue"],
-        ) if not disabled else None,
-        bgcolor=COLORS["surface_elevated"] if disabled else None,
-        on_click=on_click if not disabled else None,
-        ink=True,
-        opacity=0.5 if disabled else 1,
-    )
-
-
-def crear_chip(texto: str, color: str = None, outlined: bool = False) -> ft.Container:
-    """Crea un chip/badge."""
-    if color is None:
-        color = COLORS["primary"]
-
-    if outlined:
-        return ft.Container(
-            content=ft.Text(texto, size=11, weight=ft.FontWeight.W_500, color=color),
-            padding=ft.padding.symmetric(horizontal=12, vertical=6),
-            border_radius=20,
-            border=ft.border.all(1.5, color),
-            bgcolor=ft.Colors.with_opacity(0.1, color),
-        )
-
-    return ft.Container(
-        content=ft.Text(texto, size=11, weight=ft.FontWeight.W_500, color=ft.Colors.WHITE),
-        padding=ft.padding.symmetric(horizontal=12, vertical=6),
-        border_radius=20,
-        bgcolor=color,
-    )
-
-
-def crear_switch_item(titulo: str, descripcion: str, valor: bool = False, on_change=None, data=None) -> ft.Container:
-    """Crea un item con switch."""
-    switch = ft.Switch(
-        value=valor,
-        on_change=on_change,
-        active_color=COLORS["primary"],
-        active_track_color=COLORS["primary_light"],
-        inactive_thumb_color=COLORS["text_muted"],
-        inactive_track_color=COLORS["surface_elevated"],
-        data=data,
-    )
-
-    return ft.Container(
-        content=ft.Row(
-            controls=[
-                ft.Column(
-                    controls=[
-                        ft.Text(titulo, size=14, weight=ft.FontWeight.W_500, color=COLORS["text"]),
-                        ft.Text(descripcion, size=12, color=COLORS["text_muted"]),
-                    ],
-                    spacing=4,
-                    expand=True,
-                ),
-                switch,
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        ),
-        padding=ft.padding.symmetric(horizontal=20, vertical=16),
-        border_radius=BORDER_RADIUS_SM,
-        bgcolor=COLORS["surface_light"],
-        border=ft.border.all(1, COLORS["border"]),
+        padding=ft.padding.symmetric(horizontal=10, vertical=5),
+        border_radius=BORDER_RADIUS_FULL,
+        bgcolor=ft.Colors.with_opacity(0.12, color),
     )

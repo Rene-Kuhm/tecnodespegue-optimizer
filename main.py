@@ -53,99 +53,100 @@ class TecnodespegueOptimizer:
         )
 
     def _construir_ui(self):
-        """Construye la interfaz de usuario estilo CleanMyMac."""
+        """Construye la interfaz de usuario estilo CleanMyMac X."""
         # Verificar permisos de administrador
         if not es_administrador():
             self._mostrar_advertencia_admin()
 
-        # Definir items de navegación
+        # Definir items de navegación con colores únicos
         nav_items = [
-            (ft.Icons.SPEED_ROUNDED, "Escaneo"),
-            (ft.Icons.TUNE_ROUNDED, "Tweaks"),
-            (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware"),
-            (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza"),
-            (ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED, "Servicios"),
-            (ft.Icons.DEVELOPER_BOARD_ROUNDED, "Drivers"),
+            (ft.Icons.SPEED_ROUNDED, "Escaneo", theme.COLORS["scan_blue"]),
+            (ft.Icons.TUNE_ROUNDED, "Tweaks", theme.COLORS["scan_purple"]),
+            (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware", theme.COLORS["protect_red"]),
+            (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza", theme.COLORS["clean_green"]),
+            (ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED, "Servicios", theme.COLORS["speed_orange"]),
+            (ft.Icons.DEVELOPER_BOARD_ROUNDED, "Drivers", theme.COLORS["apps_cyan"]),
         ]
 
-        # Crear items de navegación estilo CleanMyMac
+        # Crear items de navegación
         self.nav_items_refs = []
         nav_controls = []
 
-        for i, (icono, label) in enumerate(nav_items):
-            item = self._crear_sidebar_item(icono, label, i)
+        for i, (icono, label, color) in enumerate(nav_items):
+            item = self._crear_nav_item(icono, label, color, i)
             self.nav_items_refs.append(item)
             nav_controls.append(item)
 
-        # Logo grande estilo CleanMyMac
+        # Logo con efecto glow
         logo_container = ft.Container(
             content=ft.Column(
                 controls=[
+                    # Logo circular con gradiente
                     ft.Container(
                         content=ft.Stack(
                             controls=[
-                                # Círculo exterior con glow
+                                # Glow effect
                                 ft.Container(
-                                    width=80,
-                                    height=80,
-                                    border_radius=40,
-                                    gradient=ft.LinearGradient(
-                                        begin=ft.alignment.top_left,
-                                        end=ft.alignment.bottom_right,
-                                        colors=theme.COLORS["gradient_purple"],
-                                    ),
-                                    shadow=ft.BoxShadow(
-                                        spread_radius=0,
-                                        blur_radius=25,
-                                        color=ft.Colors.with_opacity(0.4, theme.COLORS["primary"]),
-                                        offset=ft.Offset(0, 5)
-                                    ),
+                                    width=72,
+                                    height=72,
+                                    border_radius=36,
+                                    shadow=theme.SHADOW_GLOW_CYAN,
                                 ),
-                                # Icono central
+                                # Main circle
                                 ft.Container(
                                     content=ft.Icon(
                                         ft.Icons.ROCKET_LAUNCH_ROUNDED,
-                                        size=40,
+                                        size=32,
                                         color=ft.Colors.WHITE,
                                     ),
-                                    width=80,
-                                    height=80,
+                                    width=64,
+                                    height=64,
+                                    border_radius=32,
+                                    gradient=ft.LinearGradient(
+                                        begin=ft.alignment.top_left,
+                                        end=ft.alignment.bottom_right,
+                                        colors=theme.COLORS["gradient_scan"],
+                                    ),
                                     alignment=ft.alignment.center,
+                                    left=4,
+                                    top=4,
                                 ),
                             ],
                         ),
+                        width=72,
+                        height=72,
                     ),
-                    ft.Container(height=16),
+                    ft.Container(height=12),
                     ft.Text(
                         "Tecnodespegue",
-                        size=16,
+                        size=14,
                         weight=ft.FontWeight.BOLD,
                         color=theme.COLORS["text"],
                     ),
                     ft.Text(
-                        "OPTIMIZER",
-                        size=11,
+                        "O P T I M I Z E R",
+                        size=9,
                         weight=ft.FontWeight.W_600,
-                        color=theme.COLORS["primary"],
+                        color=theme.COLORS["scan_blue"],
                     ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=4,
+                spacing=2,
             ),
-            padding=ft.padding.symmetric(vertical=40, horizontal=20),
+            padding=ft.padding.only(top=32, bottom=24),
         )
 
-        # Separador elegante
+        # Separador con gradiente
         separator = ft.Container(
             content=ft.Container(
-                width=50,
+                width=40,
                 height=2,
                 border_radius=1,
                 gradient=ft.LinearGradient(
                     colors=[
-                        ft.Colors.with_opacity(0, theme.COLORS["primary"]),
-                        theme.COLORS["primary"],
-                        ft.Colors.with_opacity(0, theme.COLORS["primary"]),
+                        ft.Colors.TRANSPARENT,
+                        theme.COLORS["scan_blue"],
+                        ft.Colors.TRANSPARENT,
                     ],
                 ),
             ),
@@ -157,76 +158,54 @@ class TecnodespegueOptimizer:
         nav_column = ft.Container(
             content=ft.Column(
                 controls=nav_controls,
-                spacing=8,
+                spacing=4,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.symmetric(horizontal=12),
+            padding=ft.padding.symmetric(horizontal=8),
         )
 
-        # Estado de admin con diseño mejorado
+        # Estado de admin
         is_admin = es_administrador()
         admin_status = ft.Container(
-            content=ft.Row(
+            content=ft.Column(
                 controls=[
                     ft.Container(
                         content=ft.Icon(
                             ft.Icons.SHIELD_ROUNDED if is_admin else ft.Icons.SHIELD_OUTLINED,
-                            size=16,
+                            size=18,
                             color=ft.Colors.WHITE,
                         ),
-                        width=32,
-                        height=32,
-                        border_radius=16,
+                        width=36,
+                        height=36,
+                        border_radius=18,
                         bgcolor=theme.COLORS["success"] if is_admin else theme.COLORS["warning"],
+                        alignment=ft.alignment.center,
                     ),
-                    ft.Column(
-                        controls=[
-                            ft.Text(
-                                "Administrador" if is_admin else "Usuario",
-                                size=12,
-                                weight=ft.FontWeight.W_600,
-                                color=theme.COLORS["text"],
-                            ),
-                            ft.Text(
-                                "Activo" if is_admin else "Limitado",
-                                size=10,
-                                color=theme.COLORS["text_muted"],
-                            ),
-                        ],
-                        spacing=2,
+                    ft.Container(height=4),
+                    ft.Text(
+                        "Admin" if is_admin else "Usuario",
+                        size=10,
+                        weight=ft.FontWeight.W_500,
+                        color=theme.COLORS["text_muted"],
                     ),
                 ],
-                spacing=12,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0,
             ),
-            padding=ft.padding.symmetric(horizontal=16, vertical=12),
-            margin=ft.margin.symmetric(horizontal=12),
-            border_radius=theme.BORDER_RADIUS_SM,
-            bgcolor=theme.COLORS["surface_light"],
+            padding=ft.padding.only(bottom=8),
         )
 
         # Versión
         version_badge = ft.Container(
-            content=ft.Row(
-                controls=[
-                    ft.Container(
-                        width=8,
-                        height=8,
-                        border_radius=4,
-                        bgcolor=theme.COLORS["success"],
-                    ),
-                    ft.Text(
-                        "v1.0.0",
-                        size=11,
-                        color=theme.COLORS["text_muted"],
-                    ),
-                ],
-                spacing=8,
-                alignment=ft.MainAxisAlignment.CENTER,
+            content=ft.Text(
+                "v1.0.0",
+                size=10,
+                color=theme.COLORS["text_muted"],
             ),
-            padding=ft.padding.only(bottom=24, top=12),
+            padding=ft.padding.only(bottom=16),
         )
 
-        # Sidebar completo estilo CleanMyMac
+        # Sidebar compacto estilo CleanMyMac
         sidebar = ft.Container(
             content=ft.Column(
                 controls=[
@@ -238,13 +217,14 @@ class TecnodespegueOptimizer:
                     version_badge,
                 ],
                 spacing=0,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            width=200,
+            width=88,
             bgcolor=theme.COLORS["sidebar"],
             border=ft.border.only(right=ft.BorderSide(1, theme.COLORS["border"])),
         )
 
-        # Contenido principal con gradiente sutil
+        # Contenido principal
         self.contenido = ft.Container(
             content=PaginaInicio(self.page),
             expand=True,
@@ -264,57 +244,78 @@ class TecnodespegueOptimizer:
             )
         )
 
-    def _crear_sidebar_item(self, icono, texto: str, index: int) -> ft.Container:
-        """Crea un item de sidebar estilo CleanMyMac."""
+    def _crear_nav_item(self, icono, texto: str, color: str, index: int) -> ft.Container:
+        """Crea un item de navegación vertical estilo CleanMyMac."""
         is_selected = index == self.pagina_actual
-        color = theme.COLORS["primary"] if is_selected else theme.COLORS["text_muted"]
+
+        # Contenedor del icono
+        icon_container = ft.Container(
+            content=ft.Icon(
+                icono,
+                size=22,
+                color=color if is_selected else theme.COLORS["text_muted"],
+            ),
+            width=44,
+            height=44,
+            border_radius=14,
+            bgcolor=ft.Colors.with_opacity(0.15, color) if is_selected else None,
+            alignment=ft.alignment.center,
+        )
 
         return ft.Container(
-            content=ft.Row(
+            content=ft.Column(
                 controls=[
-                    ft.Container(
-                        content=ft.Icon(icono, size=22, color=color),
-                        padding=10,
-                        border_radius=12,
-                        bgcolor=ft.Colors.with_opacity(0.15, theme.COLORS["primary"]) if is_selected else None,
-                    ),
+                    icon_container,
                     ft.Text(
                         texto,
-                        size=14,
+                        size=10,
                         weight=ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_400,
-                        color=theme.COLORS["text"] if is_selected else theme.COLORS["text_muted"],
+                        color=color if is_selected else theme.COLORS["text_muted"],
+                        text_align=ft.TextAlign.CENTER,
                     ),
                 ],
-                spacing=12,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=4,
             ),
-            padding=ft.padding.symmetric(horizontal=16, vertical=10),
-            border_radius=theme.BORDER_RADIUS_SM,
-            bgcolor=theme.COLORS["sidebar_active"] if is_selected else None,
+            padding=ft.padding.symmetric(vertical=8, horizontal=4),
+            border_radius=theme.BORDER_RADIUS,
+            bgcolor=ft.Colors.with_opacity(0.08, color) if is_selected else None,
             on_click=lambda e, idx=index: self._cambiar_pagina(idx),
             ink=True,
-            animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
-            data=index,
+            animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
+            data={"index": index, "color": color},
         )
 
     def _cambiar_pagina(self, index: int):
         """Cambia la página actual."""
         self.pagina_actual = index
 
+        # Colores por índice
+        colores = [
+            theme.COLORS["scan_blue"],
+            theme.COLORS["scan_purple"],
+            theme.COLORS["protect_red"],
+            theme.COLORS["clean_green"],
+            theme.COLORS["speed_orange"],
+            theme.COLORS["apps_cyan"],
+        ]
+
         # Actualizar estilos de navegación
         for i, item in enumerate(self.nav_items_refs):
             is_selected = i == index
-            color = theme.COLORS["primary"] if is_selected else theme.COLORS["text_muted"]
+            color = colores[i]
 
-            # Actualizar icono
-            item.content.controls[0].bgcolor = ft.Colors.with_opacity(0.15, theme.COLORS["primary"]) if is_selected else None
-            item.content.controls[0].content.color = color
+            # Actualizar contenedor del icono
+            icon_container = item.content.controls[0]
+            icon_container.content.color = color if is_selected else theme.COLORS["text_muted"]
+            icon_container.bgcolor = ft.Colors.with_opacity(0.15, color) if is_selected else None
 
             # Actualizar texto
             item.content.controls[1].weight = ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_400
-            item.content.controls[1].color = theme.COLORS["text"] if is_selected else theme.COLORS["text_muted"]
+            item.content.controls[1].color = color if is_selected else theme.COLORS["text_muted"]
 
-            # Actualizar fondo
-            item.bgcolor = theme.COLORS["sidebar_active"] if is_selected else None
+            # Actualizar fondo del item
+            item.bgcolor = ft.Colors.with_opacity(0.08, color) if is_selected else None
 
         # Páginas disponibles
         paginas = [
@@ -346,14 +347,18 @@ class TecnodespegueOptimizer:
             title=ft.Row(
                 controls=[
                     ft.Container(
-                        content=ft.Icon(ft.Icons.SHIELD_ROUNDED, color=ft.Colors.WHITE, size=24),
-                        padding=10,
-                        border_radius=12,
-                        bgcolor=theme.COLORS["primary"],
+                        content=ft.Icon(ft.Icons.SHIELD_ROUNDED, color=ft.Colors.WHITE, size=22),
+                        width=44,
+                        height=44,
+                        border_radius=14,
+                        gradient=ft.LinearGradient(
+                            colors=theme.COLORS["gradient_scan"],
+                        ),
+                        alignment=ft.alignment.center,
                     ),
-                    ft.Text("Permisos Requeridos", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Container(width=12),
+                    ft.Text("Permisos Requeridos", size=18, weight=ft.FontWeight.BOLD),
                 ],
-                spacing=16,
             ),
             content=ft.Container(
                 content=ft.Column(
@@ -364,18 +369,22 @@ class TecnodespegueOptimizer:
                             size=14,
                             color=theme.COLORS["text_secondary"],
                         ),
-                        ft.Container(height=12),
+                        ft.Container(height=16),
                         ft.Container(
                             content=ft.Row(
                                 controls=[
-                                    ft.Icon(ft.Icons.INFO_OUTLINE_ROUNDED, size=18, color=theme.COLORS["info"]),
+                                    ft.Icon(
+                                        ft.Icons.INFO_OUTLINE_ROUNDED,
+                                        size=18,
+                                        color=theme.COLORS["info"],
+                                    ),
+                                    ft.Container(width=8),
                                     ft.Text(
                                         "Sin privilegios elevados, algunas funciones estarán limitadas.",
                                         size=13,
                                         color=theme.COLORS["info"],
                                     ),
                                 ],
-                                spacing=10,
                             ),
                             padding=16,
                             border_radius=12,
@@ -394,22 +403,27 @@ class TecnodespegueOptimizer:
                 ft.Container(
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.SHIELD_ROUNDED, size=18, color=ft.Colors.WHITE),
-                            ft.Text("Ejecutar como Admin", size=14, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+                            ft.Icon(ft.Icons.SHIELD_ROUNDED, size=16, color=ft.Colors.WHITE),
+                            ft.Container(width=6),
+                            ft.Text(
+                                "Ejecutar como Admin",
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=ft.Colors.WHITE,
+                            ),
                         ],
-                        spacing=8,
                     ),
                     padding=ft.padding.symmetric(horizontal=20, vertical=10),
-                    border_radius=12,
+                    border_radius=10,
                     gradient=ft.LinearGradient(
-                        colors=theme.COLORS["gradient_blue"],
+                        colors=theme.COLORS["gradient_scan"],
                     ),
                     on_click=solicitar_permisos,
                     ink=True,
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
-            shape=ft.RoundedRectangleBorder(radius=20),
+            shape=ft.RoundedRectangleBorder(radius=16),
             bgcolor=theme.COLORS["surface"],
         )
 

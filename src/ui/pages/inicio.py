@@ -1,13 +1,13 @@
-"""Página de inicio estilo CleanMyMac con botón de escaneo central."""
+"""Página de inicio estilo CleanMyMac X con botón de escaneo central espectacular."""
 import flet as ft
 from src.ui import theme
-from src.utils.system_info import obtener_info_sistema, obtener_procesos_top
+from src.utils.system_info import obtener_info_sistema
 from src.modules.perfiles import NivelPerfil, aplicar_perfil, PERFILES
 import threading
 
 
-def crear_pagina_inicio(page: ft.Page = None) -> ft.Column:
-    """Crea la página principal estilo CleanMyMac con escaneo central."""
+def crear_pagina_inicio(page: ft.Page = None) -> ft.Container:
+    """Crea la página principal estilo CleanMyMac X."""
 
     # Estado de escaneo
     scanning = {"active": False, "progress": 0}
@@ -19,79 +19,81 @@ def crear_pagina_inicio(page: ft.Page = None) -> ft.Column:
         info_sistema = None
 
     # Referencias para actualizar UI
-    scan_button_ref = {"container": None}
-    progress_text_ref = {"text": None}
-    status_cards_ref = {"container": None}
+    scan_button_ref = {"container": None, "content": None, "ring": None}
+    status_text_ref = {"text": None}
+    result_panel_ref = {"container": None}
 
     def crear_boton_escaneo() -> ft.Container:
-        """Crea el botón de escaneo grande estilo CleanMyMac."""
+        """Crea el botón de escaneo grande estilo CleanMyMac X."""
+        size = 240
+        inner_size = 200
 
         def on_scan_click(e):
             if not scanning["active"]:
                 iniciar_escaneo()
-            else:
-                detener_escaneo()
 
-        # Contenido del botón
+        # Contenido inicial
         button_content = ft.Column(
             controls=[
                 ft.Icon(
                     ft.Icons.PLAY_ARROW_ROUNDED,
-                    size=72,
+                    size=64,
                     color=ft.Colors.WHITE,
                 ),
-                ft.Container(height=8),
+                ft.Container(height=4),
                 ft.Text(
-                    "ESCANEAR",
-                    size=18,
+                    "Escanear",
+                    size=20,
                     weight=ft.FontWeight.BOLD,
                     color=ft.Colors.WHITE,
                 ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
-            spacing=4,
+            spacing=0,
         )
+        scan_button_ref["content"] = button_content
 
-        # Anillo exterior
+        # Anillo exterior animado
         outer_ring = ft.Container(
-            width=220,
-            height=220,
-            border_radius=110,
-            border=ft.border.all(3, ft.Colors.with_opacity(0.3, theme.COLORS["primary"])),
+            width=size,
+            height=size,
+            border_radius=size // 2,
+            border=ft.border.all(2, ft.Colors.with_opacity(0.25, theme.COLORS["scan_blue"])),
+            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
         )
+        scan_button_ref["ring"] = outer_ring
 
-        # Círculo principal con gradiente
+        # Círculo principal con gradiente cyan-purple
         main_circle = ft.Container(
             content=button_content,
-            width=190,
-            height=190,
-            border_radius=95,
+            width=inner_size,
+            height=inner_size,
+            border_radius=inner_size // 2,
             gradient=ft.LinearGradient(
                 begin=ft.alignment.top_center,
                 end=ft.alignment.bottom_center,
-                colors=theme.COLORS["gradient_blue"],
+                colors=theme.COLORS["gradient_scan"],
             ),
             shadow=ft.BoxShadow(
                 spread_radius=0,
-                blur_radius=40,
-                color=ft.Colors.with_opacity(0.5, theme.COLORS["primary"]),
+                blur_radius=50,
+                color=ft.Colors.with_opacity(0.5, theme.COLORS["scan_blue"]),
                 offset=ft.Offset(0, 15),
             ),
             alignment=ft.alignment.center,
-            left=15,
-            top=15,
+            left=(size - inner_size) // 2,
+            top=(size - inner_size) // 2,
+            animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
         )
 
         scan_button = ft.Container(
             content=ft.Stack(
                 controls=[outer_ring, main_circle],
             ),
-            width=220,
-            height=220,
+            width=size,
+            height=size,
             on_click=on_scan_click,
-            ink=True,
-            ink_color=ft.Colors.with_opacity(0.2, ft.Colors.WHITE),
         )
 
         scan_button_ref["container"] = scan_button
@@ -100,392 +102,463 @@ def crear_pagina_inicio(page: ft.Page = None) -> ft.Column:
     def iniciar_escaneo():
         """Inicia el escaneo del sistema."""
         scanning["active"] = True
+        scanning["progress"] = 0
+
+        # Actualizar texto de estado
+        if status_text_ref["text"]:
+            status_text_ref["text"].value = "Iniciando escaneo..."
+            status_text_ref["text"].color = theme.COLORS["scan_blue"]
+
         if page:
             page.update()
 
         def ejecutar_escaneo():
             try:
-                # Simular progreso de escaneo
                 import time
                 pasos = [
-                    "Analizando archivos temporales...",
-                    "Escaneando caché del sistema...",
-                    "Verificando registro de Windows...",
-                    "Detectando bloatware...",
-                    "Analizando servicios...",
-                    "Optimizando configuración...",
+                    ("Analizando archivos temporales...", 15),
+                    ("Escaneando caché del sistema...", 30),
+                    ("Verificando bloatware instalado...", 45),
+                    ("Analizando servicios de Windows...", 60),
+                    ("Detectando drivers desactualizados...", 75),
+                    ("Calculando optimizaciones...", 90),
+                    ("Finalizando análisis...", 100),
                 ]
 
-                for i, paso in enumerate(pasos):
+                for paso, progreso in pasos:
                     if not scanning["active"]:
                         break
-                    scanning["progress"] = int((i + 1) / len(pasos) * 100)
-                    if progress_text_ref["text"]:
-                        progress_text_ref["text"].value = paso
+
+                    scanning["progress"] = progreso
+
+                    # Actualizar contenido del botón
+                    if scan_button_ref["content"]:
+                        scan_button_ref["content"].controls = [
+                            ft.ProgressRing(
+                                width=50,
+                                height=50,
+                                stroke_width=4,
+                                color=ft.Colors.WHITE,
+                            ),
+                            ft.Container(height=8),
+                            ft.Text(
+                                f"{progreso}%",
+                                size=22,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.WHITE,
+                            ),
+                        ]
+
+                    if status_text_ref["text"]:
+                        status_text_ref["text"].value = paso
+
                     if page:
                         page.update()
-                    time.sleep(0.8)
+                    time.sleep(0.6)
 
                 # Completado
                 scanning["active"] = False
                 scanning["progress"] = 100
-                if progress_text_ref["text"]:
-                    progress_text_ref["text"].value = "Escaneo completado - Se encontraron oportunidades de optimización"
-                    progress_text_ref["text"].color = theme.COLORS["success"]
+
+                # Actualizar botón a estado completado
+                if scan_button_ref["content"]:
+                    scan_button_ref["content"].controls = [
+                        ft.Icon(
+                            ft.Icons.CHECK_CIRCLE_ROUNDED,
+                            size=64,
+                            color=ft.Colors.WHITE,
+                        ),
+                        ft.Container(height=4),
+                        ft.Text(
+                            "Completado",
+                            size=18,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.WHITE,
+                        ),
+                    ]
+
+                if status_text_ref["text"]:
+                    status_text_ref["text"].value = "Se encontraron oportunidades de optimización"
+                    status_text_ref["text"].color = theme.COLORS["success"]
+
+                # Mostrar resultados después de 1.5s
+                time.sleep(1.5)
+
+                # Restaurar botón
+                if scan_button_ref["content"]:
+                    scan_button_ref["content"].controls = [
+                        ft.Icon(
+                            ft.Icons.PLAY_ARROW_ROUNDED,
+                            size=64,
+                            color=ft.Colors.WHITE,
+                        ),
+                        ft.Container(height=4),
+                        ft.Text(
+                            "Escanear",
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.WHITE,
+                        ),
+                    ]
+
                 if page:
                     page.update()
 
             except Exception as e:
                 scanning["active"] = False
-                if progress_text_ref["text"]:
-                    progress_text_ref["text"].value = f"Error: {str(e)}"
-                    progress_text_ref["text"].color = theme.COLORS["error"]
+                if status_text_ref["text"]:
+                    status_text_ref["text"].value = f"Error: {str(e)}"
+                    status_text_ref["text"].color = theme.COLORS["error"]
                 if page:
                     page.update()
 
-        thread = threading.Thread(target=ejecutar_escaneo)
+        thread = threading.Thread(target=ejecutar_escaneo, daemon=True)
         thread.start()
 
-    def detener_escaneo():
-        """Detiene el escaneo."""
-        scanning["active"] = False
-        if progress_text_ref["text"]:
-            progress_text_ref["text"].value = "Escaneo detenido"
-            progress_text_ref["text"].color = theme.COLORS["warning"]
-        if page:
-            page.update()
-
-    def crear_tarjeta_accion(icono, titulo: str, descripcion: str, color: str, gradiente: list) -> ft.Container:
-        """Crea una tarjeta de acción grande estilo CleanMyMac."""
+    def crear_modulo_card(icono, titulo: str, descripcion: str, color: str, valor: str = None) -> ft.Container:
+        """Crea una tarjeta de módulo compacta."""
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Container(
-                        content=ft.Icon(icono, size=36, color=ft.Colors.WHITE),
-                        padding=16,
-                        border_radius=18,
-                        gradient=ft.LinearGradient(
-                            begin=ft.alignment.top_left,
-                            end=ft.alignment.bottom_right,
-                            colors=gradiente,
-                        ),
-                        shadow=ft.BoxShadow(
-                            spread_radius=0,
-                            blur_radius=15,
-                            color=ft.Colors.with_opacity(0.3, color),
-                            offset=ft.Offset(0, 5),
-                        ),
+                    ft.Row(
+                        controls=[
+                            ft.Container(
+                                content=ft.Icon(icono, size=22, color=color),
+                                width=44,
+                                height=44,
+                                border_radius=14,
+                                bgcolor=ft.Colors.with_opacity(0.12, color),
+                                alignment=ft.alignment.center,
+                            ),
+                            ft.Container(expand=True),
+                            ft.Text(
+                                valor,
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=color,
+                            ) if valor else ft.Container(),
+                        ],
                     ),
-                    ft.Container(height=16),
+                    ft.Container(height=12),
                     ft.Text(
                         titulo,
-                        size=16,
-                        weight=ft.FontWeight.BOLD,
+                        size=14,
+                        weight=ft.FontWeight.W_600,
                         color=theme.COLORS["text"],
                     ),
                     ft.Text(
                         descripcion,
                         size=12,
                         color=theme.COLORS["text_muted"],
-                        text_align=ft.TextAlign.CENTER,
                     ),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=4,
+                spacing=2,
             ),
-            padding=24,
+            padding=16,
             border_radius=theme.BORDER_RADIUS,
             bgcolor=theme.COLORS["surface"],
             border=ft.border.all(1, theme.COLORS["border"]),
-            width=180,
-            height=200,
+            expand=True,
             ink=True,
         )
 
-    def crear_stat_circular(valor: float, label: str, color: str) -> ft.Container:
-        """Crea un indicador de estadística circular."""
+    def crear_stat_mini(valor: str, label: str, icono, color: str) -> ft.Container:
+        """Crea un indicador de estadística mini."""
         return ft.Container(
-            content=ft.Column(
+            content=ft.Row(
                 controls=[
-                    ft.Stack(
+                    ft.Container(
+                        content=ft.Icon(icono, size=18, color=color),
+                        width=36,
+                        height=36,
+                        border_radius=10,
+                        bgcolor=ft.Colors.with_opacity(0.12, color),
+                        alignment=ft.alignment.center,
+                    ),
+                    ft.Column(
                         controls=[
-                            ft.Container(
-                                content=ft.ProgressRing(
-                                    value=valor / 100,
-                                    stroke_width=8,
-                                    color=color,
-                                    bgcolor=theme.COLORS["surface_elevated"],
-                                ),
-                                width=80,
-                                height=80,
+                            ft.Text(
+                                valor,
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=theme.COLORS["text"],
                             ),
-                            ft.Container(
-                                content=ft.Text(
-                                    f"{valor:.0f}%",
-                                    size=18,
-                                    weight=ft.FontWeight.BOLD,
-                                    color=theme.COLORS["text"],
-                                ),
-                                width=80,
-                                height=80,
-                                alignment=ft.alignment.center,
+                            ft.Text(
+                                label,
+                                size=11,
+                                color=theme.COLORS["text_muted"],
                             ),
                         ],
-                    ),
-                    ft.Container(height=8),
-                    ft.Text(
-                        label,
-                        size=12,
-                        color=theme.COLORS["text_secondary"],
-                        text_align=ft.TextAlign.CENTER,
+                        spacing=0,
                     ),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=4,
+                spacing=10,
             ),
-        )
-
-    def crear_seccion_hero() -> ft.Container:
-        """Crea la sección principal con el botón de escaneo."""
-        progress_text = ft.Text(
-            "Presiona para escanear y optimizar tu sistema",
-            size=14,
-            color=theme.COLORS["text_secondary"],
-            text_align=ft.TextAlign.CENTER,
-        )
-        progress_text_ref["text"] = progress_text
-
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Container(height=40),
-                    # Título principal
-                    ft.Text(
-                        "Tecnodespegue Optimizer",
-                        size=32,
-                        weight=ft.FontWeight.BOLD,
-                        color=theme.COLORS["text"],
-                    ),
-                    ft.Text(
-                        "Optimiza, limpia y acelera tu Windows 11",
-                        size=16,
-                        color=theme.COLORS["text_secondary"],
-                    ),
-                    ft.Container(height=50),
-                    # Botón de escaneo
-                    crear_boton_escaneo(),
-                    ft.Container(height=30),
-                    # Texto de estado
-                    progress_text,
-                    ft.Container(height=20),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
-            ),
-            alignment=ft.alignment.center,
-            expand=True,
-        )
-
-    def crear_seccion_stats() -> ft.Container:
-        """Crea la sección de estadísticas del sistema."""
-        if not info_sistema:
-            return ft.Container()
-
-        info = info_sistema
-        ram_uso = info.ram_uso_porcentaje
-        disco_uso = (info.disco_total_gb - info.disco_libre_gb) / info.disco_total_gb * 100 if info.disco_total_gb > 0 else 0
-
-        # Determinar colores según uso
-        ram_color = theme.COLORS["success"] if ram_uso < 60 else theme.COLORS["warning"] if ram_uso < 85 else theme.COLORS["error"]
-        disco_color = theme.COLORS["success"] if disco_uso < 70 else theme.COLORS["warning"] if disco_uso < 90 else theme.COLORS["error"]
-
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "Estado del Sistema",
-                        size=18,
-                        weight=ft.FontWeight.BOLD,
-                        color=theme.COLORS["text"],
-                    ),
-                    ft.Container(height=20),
-                    ft.Row(
-                        controls=[
-                            crear_stat_circular(ram_uso, "Memoria RAM", ram_color),
-                            ft.Container(width=40),
-                            crear_stat_circular(disco_uso, "Disco", disco_color),
-                            ft.Container(width=40),
-                            ft.Container(
-                                content=ft.Column(
-                                    controls=[
-                                        ft.Container(
-                                            content=ft.Icon(
-                                                ft.Icons.COMPUTER_ROUNDED,
-                                                size=32,
-                                                color=theme.COLORS["primary"],
-                                            ),
-                                            width=80,
-                                            height=80,
-                                            border_radius=40,
-                                            bgcolor=ft.Colors.with_opacity(0.1, theme.COLORS["primary"]),
-                                            alignment=ft.alignment.center,
-                                        ),
-                                        ft.Container(height=8),
-                                        ft.Text(
-                                            f"Build {info.build}",
-                                            size=12,
-                                            color=theme.COLORS["text_secondary"],
-                                            text_align=ft.TextAlign.CENTER,
-                                        ),
-                                    ],
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                    spacing=4,
-                                ),
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                    ),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            padding=ft.padding.symmetric(horizontal=40, vertical=30),
-            border_radius=theme.BORDER_RADIUS_LG,
+            padding=ft.padding.symmetric(horizontal=16, vertical=12),
+            border_radius=theme.BORDER_RADIUS_SM,
             bgcolor=theme.COLORS["surface"],
             border=ft.border.all(1, theme.COLORS["border"]),
-            margin=ft.margin.symmetric(horizontal=40),
         )
 
-    def crear_seccion_acciones() -> ft.Container:
-        """Crea la sección de acciones rápidas."""
-        acciones = [
-            (ft.Icons.CLEANING_SERVICES_ROUNDED, "Limpieza", "Libera espacio", theme.COLORS["accent_blue"], theme.COLORS["gradient_cyan"]),
-            (ft.Icons.BOLT_ROUNDED, "Rendimiento", "Acelera tu PC", theme.COLORS["accent_orange"], theme.COLORS["gradient_orange"]),
-            (ft.Icons.DELETE_SWEEP_ROUNDED, "Bloatware", "Elimina apps", theme.COLORS["accent_purple"], theme.COLORS["gradient_purple"]),
-            (ft.Icons.SECURITY_ROUNDED, "Privacidad", "Protege datos", theme.COLORS["accent_green"], theme.COLORS["gradient_green"]),
-        ]
-
-        tarjetas = [
-            crear_tarjeta_accion(icono, titulo, desc, color, grad)
-            for icono, titulo, desc, color, grad in acciones
-        ]
-
+    def crear_barra_progreso(valor: float, color: str, label: str) -> ft.Container:
+        """Crea una barra de progreso horizontal estilizada."""
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(
-                        "Acciones Rápidas",
-                        size=18,
-                        weight=ft.FontWeight.BOLD,
-                        color=theme.COLORS["text"],
-                    ),
-                    ft.Container(height=20),
                     ft.Row(
-                        controls=tarjetas,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=20,
-                        wrap=True,
+                        controls=[
+                            ft.Text(label, size=12, color=theme.COLORS["text_secondary"]),
+                            ft.Container(expand=True),
+                            ft.Text(f"{valor:.0f}%", size=12, weight=ft.FontWeight.W_600, color=color),
+                        ],
+                    ),
+                    ft.Container(height=6),
+                    ft.Container(
+                        content=ft.Container(
+                            width=valor * 2,  # Escala relativa
+                            height=6,
+                            border_radius=3,
+                            bgcolor=color,
+                        ),
+                        width=200,
+                        height=6,
+                        border_radius=3,
+                        bgcolor=ft.Colors.with_opacity(0.15, color),
                     ),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0,
             ),
-            padding=ft.padding.symmetric(horizontal=40, vertical=30),
         )
 
+    # Obtener datos del sistema
+    ram_uso = info_sistema.ram_uso_porcentaje if info_sistema else 0
+    disco_total = info_sistema.disco_total_gb if info_sistema else 0
+    disco_libre = info_sistema.disco_libre_gb if info_sistema else 0
+    disco_uso = ((disco_total - disco_libre) / disco_total * 100) if disco_total > 0 else 0
+
+    # Colores según uso
+    ram_color = theme.COLORS["success"] if ram_uso < 60 else theme.COLORS["warning"] if ram_uso < 85 else theme.COLORS["error"]
+    disco_color = theme.COLORS["success"] if disco_uso < 70 else theme.COLORS["warning"] if disco_uso < 90 else theme.COLORS["error"]
+
+    # Texto de estado
+    status_text = ft.Text(
+        "Presiona para escanear y optimizar tu sistema",
+        size=14,
+        color=theme.COLORS["text_muted"],
+        text_align=ft.TextAlign.CENTER,
+    )
+    status_text_ref["text"] = status_text
+
+    # Sección hero con botón de escaneo
+    hero_section = ft.Container(
+        content=ft.Column(
+            controls=[
+                # Título
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text(
+                                "Optimiza tu Sistema",
+                                size=28,
+                                weight=ft.FontWeight.BOLD,
+                                color=theme.COLORS["text"],
+                            ),
+                            ft.Text(
+                                "Escanea, limpia y acelera Windows 11",
+                                size=14,
+                                color=theme.COLORS["text_muted"],
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=4,
+                    ),
+                    padding=ft.padding.only(top=32, bottom=24),
+                ),
+                # Botón de escaneo
+                crear_boton_escaneo(),
+                ft.Container(height=20),
+                # Estado
+                status_text,
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        padding=ft.padding.symmetric(horizontal=40),
+    )
+
+    # Stats del sistema en una fila compacta
+    stats_row = ft.Container(
+        content=ft.Row(
+            controls=[
+                crear_stat_mini(
+                    f"{ram_uso:.0f}%",
+                    "Memoria RAM",
+                    ft.Icons.MEMORY_ROUNDED,
+                    ram_color,
+                ),
+                crear_stat_mini(
+                    f"{disco_libre:.0f} GB",
+                    "Disco libre",
+                    ft.Icons.STORAGE_ROUNDED,
+                    disco_color,
+                ),
+                crear_stat_mini(
+                    info_sistema.build if info_sistema else "N/A",
+                    "Windows Build",
+                    ft.Icons.COMPUTER_ROUNDED,
+                    theme.COLORS["info"],
+                ),
+                crear_stat_mini(
+                    f"{info_sistema.nucleos}" if info_sistema else "N/A",
+                    "Núcleos CPU",
+                    ft.Icons.DEVELOPER_BOARD_ROUNDED,
+                    theme.COLORS["scan_purple"],
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=16,
+            wrap=True,
+        ),
+        padding=ft.padding.symmetric(horizontal=40, vertical=24),
+    )
+
+    # Módulos de optimización en grid
+    modules_section = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text(
+                    "Módulos de Optimización",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=theme.COLORS["text"],
+                ),
+                ft.Container(height=16),
+                ft.Row(
+                    controls=[
+                        crear_modulo_card(
+                            ft.Icons.CLEANING_SERVICES_ROUNDED,
+                            "Limpieza",
+                            "Archivos temporales y caché",
+                            theme.COLORS["clean_green"],
+                        ),
+                        crear_modulo_card(
+                            ft.Icons.DELETE_SWEEP_ROUNDED,
+                            "Bloatware",
+                            "Apps preinstaladas",
+                            theme.COLORS["protect_red"],
+                        ),
+                        crear_modulo_card(
+                            ft.Icons.TUNE_ROUNDED,
+                            "Tweaks",
+                            "Optimizaciones del sistema",
+                            theme.COLORS["scan_purple"],
+                        ),
+                        crear_modulo_card(
+                            ft.Icons.MISCELLANEOUS_SERVICES_ROUNDED,
+                            "Servicios",
+                            "Servicios innecesarios",
+                            theme.COLORS["speed_orange"],
+                        ),
+                    ],
+                    spacing=16,
+                ),
+            ],
+        ),
+        padding=ft.padding.symmetric(horizontal=40),
+    )
+
+    # Perfiles de optimización rápida
     def aplicar_perfil_rapido(nivel: NivelPerfil):
-        """Aplica un perfil de optimización rápido."""
-        if progress_text_ref["text"]:
-            progress_text_ref["text"].value = f"Aplicando perfil {PERFILES[nivel].nombre}..."
-            progress_text_ref["text"].color = theme.COLORS["info"]
+        """Aplica un perfil de optimización."""
+        if status_text_ref["text"]:
+            status_text_ref["text"].value = f"Aplicando perfil {PERFILES[nivel].nombre}..."
+            status_text_ref["text"].color = theme.COLORS["info"]
         if page:
             page.update()
 
         def ejecutar():
             try:
-                def callback(msg, pct):
-                    if progress_text_ref["text"]:
-                        progress_text_ref["text"].value = msg
-                    if page:
-                        page.update()
-
-                resultado = aplicar_perfil(nivel, callback)
-                if progress_text_ref["text"]:
-                    progress_text_ref["text"].value = (
-                        f"Completado: {resultado.tweaks_aplicados} tweaks, "
+                resultado = aplicar_perfil(nivel, lambda msg, pct: None)
+                if status_text_ref["text"]:
+                    status_text_ref["text"].value = (
+                        f"Perfil aplicado: {resultado.tweaks_aplicados} tweaks, "
                         f"{resultado.espacio_liberado_mb:.1f} MB liberados"
                     )
-                    progress_text_ref["text"].color = theme.COLORS["success"]
+                    status_text_ref["text"].color = theme.COLORS["success"]
             except Exception as e:
-                if progress_text_ref["text"]:
-                    progress_text_ref["text"].value = f"Error: {str(e)}"
-                    progress_text_ref["text"].color = theme.COLORS["error"]
+                if status_text_ref["text"]:
+                    status_text_ref["text"].value = f"Error: {str(e)}"
+                    status_text_ref["text"].color = theme.COLORS["error"]
             if page:
                 page.update()
 
-        thread = threading.Thread(target=ejecutar)
+        thread = threading.Thread(target=ejecutar, daemon=True)
         thread.start()
 
-    def crear_seccion_perfiles() -> ft.Container:
-        """Crea la sección de perfiles de optimización."""
-        perfiles = [
-            (NivelPerfil.MINIMO, ft.Icons.VERIFIED_USER_ROUNDED, "Seguro", theme.COLORS["success"]),
-            (NivelPerfil.RECOMENDADO, ft.Icons.THUMB_UP_ROUNDED, "Recomendado", theme.COLORS["primary"]),
-            (NivelPerfil.MAXIMO, ft.Icons.BOLT_ROUNDED, "Agresivo", theme.COLORS["warning"]),
-            (NivelPerfil.GAMING, ft.Icons.SPORTS_ESPORTS_ROUNDED, "Gaming", theme.COLORS["error"]),
-        ]
+    perfiles_data = [
+        (NivelPerfil.MINIMO, "Seguro", ft.Icons.SHIELD_ROUNDED, theme.COLORS["success"]),
+        (NivelPerfil.RECOMENDADO, "Recomendado", ft.Icons.THUMB_UP_ROUNDED, theme.COLORS["scan_blue"]),
+        (NivelPerfil.MAXIMO, "Agresivo", ft.Icons.BOLT_ROUNDED, theme.COLORS["speed_orange"]),
+        (NivelPerfil.GAMING, "Gaming", ft.Icons.SPORTS_ESPORTS_ROUNDED, theme.COLORS["protect_red"]),
+    ]
 
-        chips = []
-        for nivel, icono, label, color in perfiles:
-            chip = ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Icon(icono, size=18, color=color),
-                        ft.Text(label, size=13, weight=ft.FontWeight.W_500, color=theme.COLORS["text"]),
-                    ],
-                    spacing=8,
-                ),
-                padding=ft.padding.symmetric(horizontal=16, vertical=10),
-                border_radius=20,
-                bgcolor=ft.Colors.with_opacity(0.1, color),
-                border=ft.border.all(1, ft.Colors.with_opacity(0.3, color)),
-                on_click=lambda e, n=nivel: aplicar_perfil_rapido(n),
-                ink=True,
-            )
-            chips.append(chip)
-
-        return ft.Container(
-            content=ft.Column(
+    perfil_chips = []
+    for nivel, label, icono, color in perfiles_data:
+        chip = ft.Container(
+            content=ft.Row(
                 controls=[
-                    ft.Text(
-                        "Perfiles de Optimización",
-                        size=16,
-                        weight=ft.FontWeight.W_600,
-                        color=theme.COLORS["text"],
-                    ),
-                    ft.Container(height=16),
-                    ft.Row(
-                        controls=chips,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=12,
-                        wrap=True,
-                    ),
+                    ft.Icon(icono, size=16, color=color),
+                    ft.Text(label, size=12, weight=ft.FontWeight.W_500, color=theme.COLORS["text"]),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=6,
             ),
-            padding=ft.padding.symmetric(horizontal=40, vertical=20),
+            padding=ft.padding.symmetric(horizontal=14, vertical=8),
+            border_radius=20,
+            bgcolor=ft.Colors.with_opacity(0.1, color),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.25, color)),
+            on_click=lambda e, n=nivel: aplicar_perfil_rapido(n),
+            ink=True,
         )
+        perfil_chips.append(chip)
+
+    perfiles_section = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text(
+                    "Optimización Rápida",
+                    size=16,
+                    weight=ft.FontWeight.W_600,
+                    color=theme.COLORS["text"],
+                ),
+                ft.Container(height=12),
+                ft.Row(
+                    controls=perfil_chips,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=12,
+                    wrap=True,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        padding=ft.padding.symmetric(horizontal=40, vertical=24),
+    )
 
     # Layout principal
-    return ft.Column(
-        controls=[
-            crear_seccion_hero(),
-            crear_seccion_stats(),
-            ft.Container(height=30),
-            crear_seccion_perfiles(),
-            ft.Container(height=40),
-        ],
-        scroll=ft.ScrollMode.AUTO,
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                hero_section,
+                stats_row,
+                modules_section,
+                ft.Container(height=16),
+                perfiles_section,
+                ft.Container(height=32),
+            ],
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
         expand=True,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        bgcolor=theme.COLORS["background"],
     )
 
 
